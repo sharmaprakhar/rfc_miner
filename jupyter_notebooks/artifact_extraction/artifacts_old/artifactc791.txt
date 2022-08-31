@@ -1,0 +1,444 @@
+
+                                    
+                 +------+ +-----+ +-----+     +-----+  
+                 |Telnet| | FTP | | TFTP| ... | ... |  
+                 +------+ +-----+ +-----+     +-----+  
+                       |   |         |           |     
+                      +-----+     +-----+     +-----+  
+                      | TCP |     | UDP | ... | ... |  
+                      +-----+     +-----+     +-----+  
+                         |           |           |     
+                      +--------------------------+----+
+                      |    Internet Protocol & ICMP   |
+                      +--------------------------+----+
+                                     |                 
+                        +---------------------------+  
+                        |   Local Network Protocol  |  
+                        +---------------------------+  
+
+##################################################################################
+
+                                    
+                   +-------------------------------+   
+                   | Internet Protocol & ICMP & GGP|   
+                   +-------------------------------+   
+                           |                 |         
+                 +---------------+   +---------------+ 
+                 |   Local Net   |   |   Local Net   | 
+                 +---------------+   +---------------+ 
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Version|  IHL  |Type of Service|          Total Length         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         Identification        |Flags|      Fragment Offset    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Time to Live |    Protocol   |         Header Checksum       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       Source Address                          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Destination Address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+##################################################################################
+
+      Bits 0-2:  Precedence.
+      Bit    3:  0 = Normal Delay,      1 = Low Delay.
+      Bits   4:  0 = Normal Throughput, 1 = High Throughput.
+      Bits   5:  0 = Normal Relibility, 1 = High Relibility.
+      Bit  6-7:  Reserved for Future Use.
+
+##################################################################################
+
+         0     1     2     3     4     5     6     7
+      +-----+-----+-----+-----+-----+-----+-----+-----+
+      |                 |     |     |     |     |     |
+      |   PRECEDENCE    |  D  |  T  |  R  |  0  |  0  |
+      |                 |     |     |     |     |     |
+      +-----+-----+-----+-----+-----+-----+-----+-----+
+
+##################################################################################
+
+      Bit 0: reserved, must be zero
+      Bit 1: (DF) 0 = May Fragment,  1 = Don't Fragment.
+      Bit 2: (MF) 0 = Last Fragment, 1 = More Fragments.
+
+##################################################################################
+
+          0   1   2
+        +---+---+---+
+        |   | D | M |
+        | 0 | F | F |
+        +---+---+---+
+
+##################################################################################
+
+      0 = not copied
+      1 = copied
+
+##################################################################################
+
+      0 = control
+      1 = reserved for future use
+      2 = debugging and measurement
+      3 = reserved for future use
+
+##################################################################################
+
+      CLASS NUMBER LENGTH DESCRIPTION
+      ----- ------ ------ -----------
+        0     0      -    End of Option list.  This option occupies only
+                          1 octet; it has no length octet.
+        0     1      -    No Operation.  This option occupies only 1
+                          octet; it has no length octet.
+        0     2     11    Security.  Used to carry Security,
+                          Compartmentation, User Group (TCC), and
+                          Handling Restriction Codes compatible with DOD
+                          requirements.
+        0     3     var.  Loose Source Routing.  Used to route the
+                          internet datagram based on information
+                          supplied by the source.
+        0     9     var.  Strict Source Routing.  Used to route the
+                          internet datagram based on information
+                          supplied by the source.
+        0     7     var.  Record Route.  Used to trace the route an
+                          internet datagram takes.
+        0     8      4    Stream ID.  Used to carry the stream
+                          identifier.
+        2     4     var.  Internet Timestamp.
+
+##################################################################################
+
+        +--------+
+        |00000000|
+        +--------+
+          Type=0
+
+##################################################################################
+
+        +--------+
+        |00000001|
+        +--------+
+          Type=1
+
+##################################################################################
+
+          +--------+--------+---//---+---//---+---//---+---//---+
+          |10000010|00001011|SSS  SSS|CCC  CCC|HHH  HHH|  TCC   |
+          +--------+--------+---//---+---//---+---//---+---//---+
+           Type=130 Length=11
+
+##################################################################################
+
+        +--------+--------+--------+---------//--------+
+        |10000011| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+         Type=131
+
+##################################################################################
+
+        +--------+--------+--------+---------//--------+
+        |10001001| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+         Type=137
+
+##################################################################################
+
+        +--------+--------+--------+---------//--------+
+        |00000111| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+          Type=7
+
+##################################################################################
+
+        +--------+--------+--------+--------+
+        |10001000|00000010|    Stream ID    |
+        +--------+--------+--------+--------+
+         Type=136 Length=4
+
+##################################################################################
+
+        +--------+--------+--------+--------+
+        |01000100| length | pointer|oflw|flg|
+        +--------+--------+--------+--------+
+        |         internet address          |
+        +--------+--------+--------+--------+
+        |             timestamp             |
+        +--------+--------+--------+--------+
+        |                 .                 |
+                          .
+                          .
+        Type = 68
+
+##################################################################################
+
+      High Order Bits   Format                           Class
+      ---------------   -------------------------------  -----
+            0            7 bits of net, 24 bits of host    a
+            10          14 bits of net, 16 bits of host    b
+            110         21 bits of net,  8 bits of host    c
+            111         escape to extended addressing mode
+
+##################################################################################
+
+    This format allows 2**13 = 8192 fragments of 8 octets each for a
+    total of 65,536 octets.  Note that this is consistent with the the
+    datagram total length field (of course, the header is counted in the
+    total length and not in the fragments).
+
+##################################################################################
+
+    General notation in the following pseudo programs: "=<" means "less
+    than or equal", "#" means "not equal", "=" means "equal", "<-" means
+    "is set to".  Also, "x to y" includes x and excludes y; for example,
+    "4 to 7" would include 4, 5, and 6 (but not 7).
+
+##################################################################################
+
+        IF TL =< MTU THEN Submit this datagram to the next step
+             in datagram processing ELSE IF DF = 1 THEN discard the
+        datagram ELSE
+        To produce the first fragment:
+        (1)  Copy the original internet header;
+        (2)  OIHL <- IHL; OTL <- TL; OFO <- FO; OMF <- MF;
+        (3)  NFB <- (MTU-IHL*4)/8;
+        (4)  Attach the first NFB*8 data octets;
+        (5)  Correct the header:
+             MF <- 1;  TL <- (IHL*4)+(NFB*8);
+             Recompute Checksum;
+        (6)  Submit this fragment to the next step in
+             datagram processing;
+        To produce the second fragment:
+        (7)  Selectively copy the internet header (some options
+             are not copied, see option definitions);
+        (8)  Append the remaining data;
+        (9)  Correct the header:
+             IHL <- (((OIHL*4)-(length of options not copied))+3)/4;
+
+##################################################################################
+
+             TL <- OTL - NFB*8 - (OIHL-IHL)*4);
+             FO <- OFO + NFB;  MF <- OMF;  Recompute Checksum;
+        (10) Submit this fragment to the fragmentation test; DONE.
+
+##################################################################################
+
+        (1)  BUFID <- source|destination|protocol|identification;
+        (2)  IF FO = 0 AND MF = 0
+        (3)     THEN IF buffer with BUFID is allocated
+        (4)             THEN flush all reassembly for this BUFID;
+        (5)          Submit datagram to next step; DONE.
+        (6)     ELSE IF no buffer with BUFID is allocated
+        (7)             THEN allocate reassembly resources
+                             with BUFID;
+                             TIMER <- TLB; TDL <- 0;
+        (8)          put data from fragment into data buffer with
+                     BUFID from octet FO*8 to
+                                         octet (TL-(IHL*4))+FO*8;
+        (9)          set RCVBT bits from FO
+                                        to FO+((TL-(IHL*4)+7)/8);
+        (10)         IF MF = 0 THEN TDL <- TL-(IHL*4)+(FO*8)
+        (11)         IF FO = 0 THEN put header in header buffer
+        (12)         IF TDL # 0
+        (13)          AND all RCVBT bits from 0
+                                             to (TDL+7)/8 are set
+        (14)            THEN TL <- TDL+(IHL*4)
+        (15)                 Submit datagram to next step;
+        (16)                 free all reassembly resources
+                             for this BUFID; DONE.
+        (17)         TIMER <- MAX(TIMER,TTL);
+        (18)         give up until next fragment or timer expires;
+        (19) timer expires: flush all reassembly with this BUFID; DONE.
+
+##################################################################################
+
+  SEND (src, dst, prot, TOS, TTL, BufPTR, len, Id, DF, opt => result)
+
+##################################################################################
+
+      src = source address
+      dst = destination address
+      prot = protocol
+      TOS = type of service
+      TTL = time to live
+      BufPTR = buffer pointer
+      len = length of buffer
+      Id  = Identifier
+      DF = Don't Fragment
+      opt = option data
+      result = response
+        OK = datagram sent ok
+        Error = error in arguments or local network error
+
+##################################################################################
+
+  RECV (BufPTR, prot, => result, src, dst, TOS, len, opt)
+
+##################################################################################
+
+      BufPTR = buffer pointer
+      prot = protocol
+      result = response
+        OK = datagram received ok
+        Error = error in arguments
+      len = length of buffer
+      src = source address
+      dst = destination address
+      TOS = type of service
+      opt = option data
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|        Total Length = 21      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      Identification = 111     |Flg=0|   Fragment Offset = 0   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 1 |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     data      |                                                
+   +-+-+-+-+-+-+-+-+                                                
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 472      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  | Protocol = 6  |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             data              |                                
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 276      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=1|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 119  | Protocol = 6  |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 216      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|  Fragment Offset  =  32 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 119  | Protocol = 6  |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            data               |                                
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 8 |Type of Service|       Total Length = 576      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       Identification = 111    |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 6 |       Header Checksum         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        source address                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = x | Opt.  Len.= 3 | option value  | Opt. Code = x |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Len. = 4 |           option value        | Opt. Code = 1 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = y | Opt. Len. = 3 |  option value | Opt. Code = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       1       |       2       |       3       |       4       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       5       |       6       |       7       |       8       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       9       |      10       |      11       |      12       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+##################################################################################
+
+                                    
+                            0 1 2 3 4 5 6 7 
+                           +-+-+-+-+-+-+-+-+
+                           |1 0 1 0 1 0 1 0|
+                           +-+-+-+-+-+-+-+-+
+
+##################################################################################

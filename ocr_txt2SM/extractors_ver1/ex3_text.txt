@@ -1,0 +1,26 @@
++ ——————————————————————————— +
+|Protocol name length = 4 |
++ ——————————————————————————— +
+I IMI IQI I
++ ——————————————————————————— +
+I ITI ITI I
+
++ ——————————————————————————— +
+
+|Proto.level=5|Connect flags|
+
++ ——————————————————————————— +
+
+| Keep alive
+
++ ——————————————————————————— +
+Payload
+
+| |
+| Client Identifier
+
+| (UTF—8 encoded string) |
+| Username as access token |
+| (UTF—8 encoded string) |
+| Password for signature/MAC|
+| (Binary Data)

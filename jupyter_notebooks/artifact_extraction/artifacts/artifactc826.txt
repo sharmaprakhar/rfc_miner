@@ -1,0 +1,65 @@
+
+Define the following for referring to the values put in the TYPE
+field of the Ethernet packet header:
+	ether_type$XEROX_PUP,
+	ether_type$DOD_INTERNET,
+	ether_type$CHAOS, 
+and a new one:
+	ether_type$ADDRESS_RESOLUTION.  
+Also define the following values (to be discussed later):
+	ares_op$REQUEST (= 1, high byte transmitted first) and
+	ares_op$REPLY   (= 2), 
+and
+	ares_hrd$Ethernet (= 1).
+
+##################################################################################
+
+    Ethernet transmission layer (not necessarily accessible to
+	 the user):
+	48.bit: Ethernet address of destination
+	48.bit: Ethernet address of sender
+	16.bit: Protocol type = ether_type$ADDRESS_RESOLUTION
+    Ethernet packet data:
+	16.bit: (ar$hrd) Hardware address space (e.g., Ethernet,
+			 Packet Radio Net.)
+	16.bit: (ar$pro) Protocol address space.  For Ethernet
+			 hardware, this is from the set of type
+			 fields ether_typ$<protocol>.
+	 8.bit: (ar$hln) byte length of each hardware address
+	 8.bit: (ar$pln) byte length of each protocol address
+	16.bit: (ar$op)  opcode (ares_op$REQUEST | ares_op$REPLY)
+	nbytes: (ar$sha) Hardware address of sender of this
+			 packet, n from the ar$hln field.
+	mbytes: (ar$spa) Protocol address of sender of this
+			 packet, m from the ar$pln field.
+	nbytes: (ar$tha) Hardware address of target of this
+			 packet (if known).
+	mbytes: (ar$tpa) Protocol address of target.
+
+
+##################################################################################
+
+Let there exist machines X and Y that are on the same 10Mbit
+Ethernet cable.  They have Ethernet address EA(X) and EA(Y) and
+DOD Internet addresses IPA(X) and IPA(Y) .  Let the Ethernet type
+of Internet be ET(IP).  Machine X has just been started, and
+sooner or later wants to send an Internet packet to machine Y on
+the same cable.  X knows that it wants to send to IPA(Y) and
+tells the hardware driver (here an Ethernet driver) IPA(Y).  The
+driver consults the Address Resolution module to convert <ET(IP),
+IPA(Y)> into a 48.bit Ethernet address, but because X was just
+started, it does not have this information.  It throws the
+Internet packet away and instead creates an ADDRESS RESOLUTION
+packet with
+	(ar$hrd) = ares_hrd$Ethernet
+	(ar$pro) = ET(IP)
+	(ar$hln) = length(EA(X))
+	(ar$pln) = length(IPA(X))
+	(ar$op)  = ares_op$REQUEST
+	(ar$sha) = EA(X)
+	(ar$spa) = IPA(X)
+	(ar$tha) = don't care
+	(ar$tpa) = IPA(Y)
+and broadcasts this packet to everybody on the cable.
+
+##################################################################################

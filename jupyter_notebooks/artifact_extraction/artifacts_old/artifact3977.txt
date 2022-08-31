@@ -1,0 +1,623 @@
+
+      [C] XENCRYPT RSA abcd=efg
+      [S] 504 Base64 encoding error
+
+##################################################################################
+
+   +-------------------+--------------------------+--------------------+
+   | Label             | Meaning                  | Definition         |
+   +-------------------+--------------------------+--------------------+
+   | AUTHINFO          | Authentication           | [NNTP-AUTH]        |
+   |                   |                          |                    |
+   | HDR               | Batched header retrieval | Section 3.3.2,     |
+   |                   |                          | Section 8.5, and   |
+   |                   |                          | Section 8.6        |
+   |                   |                          |                    |
+   | IHAVE             | IHAVE command available  | Section 3.3.2 and  |
+   |                   |                          | Section 6.3.2      |
+   |                   |                          |                    |
+   | IMPLEMENTATION    | Server                   | Section 3.3.2      |
+   |                   | implementation-specific  |                    |
+   |                   | information              |                    |
+   |                   |                          |                    |
+   | LIST              | LIST command variants    | Section 3.3.2 and  |
+   |                   |                          | Section 7.6.1      |
+   |                   |                          |                    |
+   | MODE-READER       | Mode-switching server    | Section 3.4.2      |
+   |                   | and MODE READER command  |                    |
+   |                   | available                |                    |
+   |                   |                          |                    |
+   | NEWNEWS           | NEWNEWS command          | Section 3.3.2 and  |
+   |                   | available                | Section 7.4        |
+   |                   |                          |                    |
+   | OVER              | Overview support         | Section 3.3.2,     |
+   |                   |                          | Section 8.3, and   |
+   |                   |                          | Section 8.4        |
+   |                   |                          |                    |
+   | POST              | POST command available   | Section 3.3.2 and  |
+   |                   |                          | Section 6.3.1      |
+   |                   |                          |                    |
+   | READER            | Reader commands          | Section 3.3.2      |
+   |                   | available                |                    |
+   |                   |                          |                    |
+   | SASL              | Supported SASL           | [NNTP-AUTH]        |
+   |                   | mechanisms               |                    |
+   |                   |                          |                    |
+   | STARTTLS          | Transport layer security | [NNTP-TLS]         |
+   |                   |                          |                    |
+   | STREAMING         | Streaming feeds          | [NNTP-STREAM]      |
+   |                   |                          |                    |
+   | VERSION           | Supported NNTP versions  | Section 3.3.2      |
+   +-------------------+--------------------------+--------------------+
+
+##################################################################################
+
+     wildmat = wildmat-pattern *("," ["!"] wildmat-pattern)
+     wildmat-pattern = 1*wildmat-item
+     wildmat-item = wildmat-exact / wildmat-wild
+     wildmat-exact = %x22-29 / %x2B / %x2D-3E / %x40-5A / %x5E-7E /
+          UTF8-non-ascii ; exclude ! * , ? [ \ ]
+     wildmat-wild = "*" / "?"
+
+##################################################################################
+
+     Wildmat    Description of strings that match
+       abc      The one string "abc"
+       abc,def  The two strings "abc" and "def"
+       $@       The one character string "#"
+       a*       Any string that begins with "a"
+       a*b      Any string that begins with "a" and ends with "b"
+       a*,*b    Any string that begins with "a" or ends with "b"
+       a*,!*b   Any string that begins with "a" and does not end with
+                "b"
+     a*,!*b,c*  Any string that begins with "a" and does not end with
+                "b", and any string that begins with "c" no matter
+                what it ends with
+     a*,c*,!*b  Any string that begins with "a" or "c" and does not
+                end with "b"
+       ?a*      Any string with "a" as its second character
+       ??a*     Any string with "a" as its third character
+       *a?      Any string with "a" as its penultimate character
+       *a??     Any string with "a" as its antepenultimate character
+
+##################################################################################
+
+   First form (message-id specified)
+     220 0|n message-id    Article follows (multi-line)
+     430                   No article with that message-id
+
+##################################################################################
+
+   First form (message-id specified)
+     221 0|n message-id    Headers follow (multi-line)
+     430                   No article with that message-id
+
+##################################################################################
+
+   First form (message-id specified)
+     222 0|n message-id    Body follows (multi-line)
+     430                   No article with that message-id
+
+##################################################################################
+
+   First form (message-id specified)
+     223 0|n message-id    Article exists
+     430                   No article with that message-id
+
+##################################################################################
+
+   Syntax
+     LIST [keyword [wildmat|argument]]
+
+##################################################################################
+
+   +--------------+---------------+------------------------------------+
+   | Keyword      | Definition    | Status                             |
+   +--------------+---------------+------------------------------------+
+   | ACTIVE       | Section 7.6.3 | Mandatory if the READER capability |
+   |              |               | is advertised                      |
+   |              |               |                                    |
+   | ACTIVE.TIMES | Section 7.6.4 | Optional                           |
+   |              |               |                                    |
+   | DISTRIB.PATS | Section 7.6.5 | Optional                           |
+   |              |               |                                    |
+   | HEADERS      | Section 8.6   | Mandatory if the HDR capability is |
+   |              |               | advertised                         |
+   |              |               |                                    |
+   | NEWSGROUPS   | Section 7.6.6 | Mandatory if the READER capability |
+   |              |               | is advertised                      |
+   |              |               |                                    |
+   | OVERVIEW.FMT | Section 8.4   | Mandatory if the OVER capability   |
+   |              |               | is advertised                      |
+   +--------------+---------------+------------------------------------+
+
+##################################################################################
+
+      [C] GROUP misc.test
+      [S] 211 1234 3000234 3002322 misc.test
+      [C] OVER
+      [S] 224 Overview information follows
+      [S] 3000234|I am just a test article|"Demo User"
+          <nobody@example.com>|6 Oct 1998 04:38:40 -0500|
+          <45223423@example.com>|<45454@example.net>|1234|
+          17|Xref: news.example.com misc.test:3000363
+      [S] .
+
+##################################################################################
+
+      [C] CAPABILITIES
+      [S] 101 Capability list:
+      [S] VERSION 2
+      [S] READER
+      [S] OVER MSGID
+      [S] LIST ACTIVE NEWSGROUPS OVERVIEW.FMT
+      [S] .
+      [C] OVER <45223423@example.com>
+      [S] 224 Overview information follows
+      [S] 0|I am just a test article|"Demo User"
+          <nobody@example.com>|6 Oct 1998 04:38:40 -0500|
+          <45223423@example.com>|<45454@example.net>|1234|
+          17|Xref: news.example.com misc.test:3000363
+      [S] .
+
+##################################################################################
+
+      [C] GROUP misc.test
+      [S] 211 1234 3000234 3002322 misc.test
+      [C] OVER 3000234-3000240
+      [S] 224 Overview information follows
+      [S] 3000234|I am just a test article|"Demo User"
+          <nobody@example.com>|6 Oct 1998 04:38:40 -0500|
+          <45223423@example.com>|<45454@example.net>|1234|
+          17|Xref: news.example.com misc.test:3000363
+      [S] 3000235|Another test article|nobody@nowhere.to
+          (Demo User)|6 Oct 1998 04:38:45 -0500|<45223425@to.to>||
+          4818|37||Distribution: fi
+      [S] 3000238|Re: I am just a test article|somebody@elsewhere.to|
+          7 Oct 1998 11:38:40 +1200|<kfwer3v@elsewhere.to>|
+          <45223423@to.to>|9234|51
+      [S] .
+
+##################################################################################
+
+   Syntax
+     LIST HEADERS [MSGID|RANGE]
+
+##################################################################################
+
+     command-line = command EOL
+     command = X-command
+     X-command = keyword *(WS token)
+
+##################################################################################
+
+     command =/ article-command /
+           body-command /
+           capabilities-command /
+           date-command /
+           group-command /
+           hdr-command /
+           head-command /
+           help-command /
+           ihave-command /
+           last-command /
+           list-command /
+           listgroup-command /
+           mode-reader-command /
+           newgroups-command /
+           newnews-command /
+           next-command /
+           over-command /
+           post-command /
+           quit-command /
+           stat-command
+
+##################################################################################
+
+     article-command = "ARTICLE" [WS article-ref]
+     body-command = "BODY" [WS article-ref]
+     capabilities-command = "CAPABILITIES" [WS keyword]
+     date-command = "DATE"
+     group-command = "GROUP" [WS newsgroup-name]
+     hdr-command = "HDR" WS header-meta-name [WS range-ref]
+     head-command = "HEAD" [WS article-ref]
+     help-command = "HELP"
+     ihave-command = "IHAVE" WS message-id
+     last-command = "LAST"
+     list-command = "LIST" [WS list-arguments]
+     listgroup-command = "LISTGROUP" [WS newsgroup-name [WS range]]
+     mode-reader-command = "MODE" WS "READER"
+     newgroups-command = "NEWGROUPS" WS date-time
+     newnews-command = "NEWNEWS" WS wildmat WS date-time
+     next-command = "NEXT"
+     over-command = "OVER" [WS range-ref]
+
+##################################################################################
+
+     post-command = "POST"
+     quit-command = "QUIT"
+     stat-command = "STAT" [WS article-ref]
+
+##################################################################################
+
+     article-ref = article-number / message-id
+     date = date2y / date4y
+     date4y = 4DIGIT 2DIGIT 2DIGIT
+     date2y = 2DIGIT 2DIGIT 2DIGIT
+     date-time = date WS time [WS "GMT"]
+     header-meta-name = header-name / metadata-name
+     list-arguments = keyword [WS token]
+     metadata-name = ":" 1*A-NOTCOLON
+     range = article-number ["-" [article-number]]
+     range-ref = range / message-id
+     time = 2DIGIT 2DIGIT 2DIGIT
+
+##################################################################################
+
+     command-datastream = UNDEFINED
+       ; not used, provided as a hook for extensions
+     command-continuation = ihave-335-continuation /
+           post-340-continuation
+
+##################################################################################
+
+     ihave-335-continuation = encoded-article
+     post-340-continuation = encoded-article
+
+##################################################################################
+
+     encoded-article = multi-line-data-block
+       ; after undoing the "dot-stuffing", this MUST match <article>
+
+##################################################################################
+
+     response = simple-response / multi-line-response
+     simple-response = initial-response-line
+     multi-line-response = initial-response-line multi-line-data-block
+
+##################################################################################
+
+     initial-response-line =
+           initial-response-content [SP trailing-comment] CRLF
+     initial-response-content = X-initial-response-content
+     X-initial-response-content = 3DIGIT *(SP response-argument)
+
+##################################################################################
+
+     response-argument = 1*A-CHAR
+     trailing-comment = *U-CHAR
+
+##################################################################################
+
+     initial-response-content =/ response-111-content /
+           response-211-content /
+           response-220-content /
+           response-221-content /
+           response-222-content /
+           response-223-content /
+           response-401-content
+
+##################################################################################
+
+     response-111-content = "111" SP date4y time
+     response-211-content = "211" 3(SP article-number) SP newsgroup-name
+     response-220-content = "220" SP article-number SP message-id
+     response-221-content = "221" SP article-number SP message-id
+     response-222-content = "222" SP article-number SP message-id
+     response-223-content = "223" SP article-number SP message-id
+     response-401-content = "401" SP capability-label
+
+##################################################################################
+
+     multi-line-response-content = article-220-ml-content /
+           body-222-ml-content /
+           capabilities-101-ml-content /
+           hdr-225-ml-content /
+           head-221-ml-content /
+           help-100-ml-content /
+           list-215-ml-content /
+           listgroup-211-ml-content /
+           newgroups-231-ml-content /
+           newnews-230-ml-content /
+           over-224-ml-content
+
+##################################################################################
+
+     article-220-ml-content = article
+     body-222-ml-content = body
+     capabilities-101-ml-content = version-line CRLF
+
+##################################################################################
+
+           *(capability-line CRLF)
+     hdr-225-ml-content = *(article-number SP hdr-content CRLF)
+     head-221-ml-content = 1*header
+     help-100-ml-content = *(*U-CHAR CRLF)
+     list-215-ml-content = list-content
+     listgroup-211-ml-content = *(article-number CRLF)
+     newgroups-231-ml-content = active-groups-list
+     newnews-230-ml-content = *(message-id CRLF)
+     over-224-ml-content = *(article-number over-content CRLF)
+
+##################################################################################
+
+     active-groups-list = *(newsgroup-name SPA article-number
+           SPA article-number SPA newsgroup-status CRLF)
+     hdr-content = *S-NONTAB
+     hdr-n-content = [(header-name ":" / metadata-name) SP hdr-content]
+     list-content = body
+     newsgroup-status = %x79 / %x6E / %x6D / private-status
+     over-content = 1*6(TAB hdr-content) /
+           7(TAB hdr-content) *(TAB hdr-n-content)
+     private-status = token ; except the values in newsgroup-status
+
+##################################################################################
+
+     capability-line = capability-entry
+     capability-entry = X-capability-entry
+     X-capability-entry = capability-label *(WS capability-argument)
+     capability-label = keyword
+     capability-argument = token
+
+##################################################################################
+
+     capability-entry =/
+           hdr-capability /
+           ihave-capability /
+           implementation-capability /
+           list-capability /
+           mode-reader-capability /
+           newnews-capability /
+           over-capability /
+           post-capability /
+           reader-capability
+
+##################################################################################
+
+     hdr-capability = "HDR"
+     ihave-capability = "IHAVE"
+     implementation-capability = "IMPLEMENTATION" *(WS token)
+
+##################################################################################
+
+     list-capability = "LIST" 1*(WS keyword)
+     mode-reader-capability = "MODE-READER"
+     newnews-capability = "NEWNEWS"
+     over-capability = "OVER" [WS "MSGID"]
+     post-capability = "POST"
+     reader-capability = "READER"
+
+##################################################################################
+
+     version-line = "VERSION" 1*(WS version-number)
+     version-number = nzDIGIT *5DIGIT
+
+##################################################################################
+
+     ; active
+     list-arguments =/ "ACTIVE" [WS wildmat]
+     list-content =/ list-active-content
+     list-active-content = active-groups-list
+
+##################################################################################
+
+     ; active.times
+     list-arguments =/ "ACTIVE.TIMES" [WS wildmat]
+     list-content =/ list-active-times-content
+     list-active-times-content =
+           *(newsgroup-name SPA 1*DIGIT SPA newsgroup-creator CRLF)
+     newsgroup-creator = U-TEXT
+
+##################################################################################
+
+     ; distrib.pats
+     list-arguments =/ "DISTRIB.PATS"
+     list-content =/ list-distrib-pats-content
+     list-distrib-pats-content =
+           *(1*DIGIT ":" wildmat ":" distribution CRLF)
+     distribution = token
+
+##################################################################################
+
+     ; headers
+     list-arguments =/ "HEADERS" [WS ("MSGID" / "RANGE")]
+     list-content =/ list-headers-content
+     list-headers-content = *(header-meta-name CRLF) /
+           *((metadata-name / ":") CRLF)
+
+##################################################################################
+
+     ; newsgroups
+     list-arguments =/ "NEWSGROUPS" [WS wildmat]
+     list-content =/ list-newsgroups-content
+     list-newsgroups-content =
+
+##################################################################################
+
+           *(newsgroup-name WS newsgroup-description CRLF)
+     newsgroup-description = S-TEXT
+
+##################################################################################
+
+     ; overview.fmt
+     list-arguments =/ "OVERVIEW.FMT"
+     list-content =/ list-overview-fmt-content
+     list-overview-fmt-content = "Subject:" CRLF
+           "From:" CRLF
+           "Date:" CRLF
+           "Message-ID:" CRLF
+           "References:" CRLF
+           ( ":bytes" CRLF ":lines" / "Bytes:" CRLF "Lines:") CRLF
+           *((header-name ":full" / metadata-name) CRLF)
+
+##################################################################################
+
+     article = 1*header CRLF body
+     header = header-name ":" [CRLF] SP header-content CRLF
+     header-content = *(S-CHAR / [CRLF] WS)
+     body = *(*B-CHAR CRLF)
+
+##################################################################################
+
+     multi-line-data-block = content-lines termination
+     content-lines = *([content-text] CRLF)
+     content-text = (".." / B-NONDOT) *B-CHAR
+     termination = "." CRLF
+
+##################################################################################
+
+     article-number = 1*16DIGIT
+     header-name = 1*A-NOTCOLON
+     keyword = ALPHA 2*(ALPHA / DIGIT / "." / "-")
+     message-id = "<" 1*248A-NOTGT ">"
+     newsgroup-name = 1*wildmat-exact
+     token = 1*P-CHAR
+
+##################################################################################
+
+     wildmat = wildmat-pattern *("," ["!"] wildmat-pattern)
+     wildmat-pattern = 1*wildmat-item
+     wildmat-item = wildmat-exact / wildmat-wild
+     wildmat-exact = %x22-29 / %x2B / %x2D-3E / %x40-5A / %x5E-7E /
+
+##################################################################################
+
+          UTF8-non-ascii  ; exclude ! * , ? [ \ ]
+     wildmat-wild = "*" / "?"
+
+##################################################################################
+
+     base64 = *(4base64-char) [base64-terminal]
+     base64-char = UPPER / LOWER / DIGIT / "+" / "/"
+     base64-terminal = 2base64-char "==" / 3base64-char "="
+
+##################################################################################
+
+     ; Assorted special character sets
+     ;   A- means based on US-ASCII, excluding controls and SP
+     ;   P- means based on UTF-8, excluding controls and SP
+     ;   U- means based on UTF-8, excluding NUL CR and LF
+     ;   B- means based on bytes, excluding NUL CR and LF
+     A-CHAR     = %x21-7E
+     A-NOTCOLON = %x21-39 / %x3B-7E  ; exclude ":"
+     A-NOTGT    = %x21-3D / %x3F-7E  ; exclude ">"
+     P-CHAR     = A-CHAR / UTF8-non-ascii
+     U-CHAR     = CTRL / TAB / SP / A-CHAR / UTF8-non-ascii
+     U-NONTAB   = CTRL /       SP / A-CHAR / UTF8-non-ascii
+     U-TEXT     = P-CHAR *U-CHAR
+     B-CHAR     = CTRL / TAB / SP / %x21-FF
+     B-NONDOT   = CTRL / TAB / SP / %x21-2D / %x2F-FF  ; exclude "."
+
+##################################################################################
+
+     ALPHA = UPPER / LOWER   ; use only when case-insensitive
+     CR = %x0D
+     CRLF = CR LF
+     CTRL = %x01-08 / %x0B-0C / %x0E-1F
+     DIGIT = %x30-39
+     nzDIGIT = %x31-39
+     EOL = *(SP / TAB) CRLF
+     LF = %x0A
+     LOWER = %x61-7A
+     SP = %x20
+     SPA = 1*SP
+     TAB = %x09
+     UPPER = %x41-5A
+     UTF8-non-ascii = UTF8-2 / UTF8-3 / UTF8-4
+     UTF8-2    = %xC2-DF UTF8-tail
+     UTF8-3    = %xE0 %xA0-BF UTF8-tail / %xE1-EC 2UTF8-tail /
+                 %xED %x80-9F UTF8-tail / %xEE-EF 2UTF8-tail
+     UTF8-4    = %xF0 %x90-BF 2UTF8-tail / %xF1-F3 3UTF8-tail /
+                 %xF4 %x80-8F 2UTF8-tail
+     UTF8-tail = %x80-BF
+     WS = 1*(SP / TAB)
+
+##################################################################################
+
+     S-CHAR   = %x21-FF
+     S-NONTAB = CTRL / SP / S-CHAR
+     S-TEXT   = (CTRL / S-CHAR) *B-CHAR
+
+##################################################################################
+
+     S-CHAR   = P-CHAR
+     S-NONTAB = U-NONTAB
+     S-TEXT   = U-TEXT
+
+##################################################################################
+
+   The =/ notation of ABNF [RFC4234] and the naming conventions
+   described in Section 9.1 SHOULD be used for this.
+
+##################################################################################
+
+     header = header-name ":" SP [header-content] CRLF
+     header-content = [WS] token *( [CRLF] WS token )
+
+##################################################################################
+
+       +-------------------+-----------------------+---------------+
+       | Command           | Indicating capability | Definition    |
+       +-------------------+-----------------------+---------------+
+       | ARTICLE           | READER                | Section 6.2.1 |
+       | BODY              | READER                | Section 6.2.3 |
+       | CAPABILITIES      | mandatory             | Section 5.2   |
+       | DATE              | READER                | Section 7.1   |
+       | GROUP             | READER                | Section 6.1.1 |
+       | HDR               | HDR                   | Section 8.5   |
+       | HEAD              | mandatory             | Section 6.2.2 |
+       | HELP              | mandatory             | Section 7.2   |
+       | IHAVE             | IHAVE                 | Section 6.3.2 |
+       | LAST              | READER                | Section 6.1.3 |
+       | LIST              | LIST                  | Section 7.6.1 |
+       | LIST ACTIVE.TIMES | LIST                  | Section 7.6.4 |
+       | LIST ACTIVE       | LIST                  | Section 7.6.3 |
+       | LIST DISTRIB.PATS | LIST                  | Section 7.6.5 |
+       | LIST HEADERS      | HDR                   | Section 8.6   |
+       | LIST NEWSGROUPS   | LIST                  | Section 7.6.6 |
+       | LIST OVERVIEW.FMT | OVER                  | Section 8.4   |
+       | LISTGROUP         | READER                | Section 6.1.2 |
+       | MODE READER       | MODE-READER           | Section 5.3   |
+       | NEWGROUPS         | READER                | Section 7.3   |
+       | NEWNEWS           | NEWNEWS               | Section 7.4   |
+       | NEXT              | READER                | Section 6.1.4 |
+       | OVER              | OVER                  | Section 8.3   |
+       | POST              | POST                  | Section 6.3.1 |
+       | QUIT              | mandatory             | Section 5.4   |
+       | STAT              | mandatory             | Section 6.2.4 |
+       +-------------------+-----------------------+---------------+
+
+##################################################################################
+
+       +-------------------+-----------------------+---------------+
+       | Command           | Indicating capability | Definition    |
+       +-------------------+-----------------------+---------------+
+       | CAPABILITIES      | mandatory             | Section 5.2   |
+       | HEAD              | mandatory             | Section 6.2.2 |
+       | HELP              | mandatory             | Section 7.2   |
+       | QUIT              | mandatory             | Section 5.4   |
+       | STAT              | mandatory             | Section 6.2.4 |
+       | HDR               | HDR                   | Section 8.5   |
+       | LIST HEADERS      | HDR                   | Section 8.6   |
+       | IHAVE             | IHAVE                 | Section 6.3.2 |
+       | LIST              | LIST                  | Section 7.6.1 |
+       | LIST ACTIVE       | LIST                  | Section 7.6.3 |
+       | LIST ACTIVE.TIMES | LIST                  | Section 7.6.4 |
+       | LIST DISTRIB.PATS | LIST                  | Section 7.6.5 |
+       | LIST NEWSGROUPS   | LIST                  | Section 7.6.6 |
+       | MODE READER       | MODE-READER           | Section 5.3   |
+       | NEWNEWS           | NEWNEWS               | Section 7.4   |
+       | OVER              | OVER                  | Section 8.3   |
+       | LIST OVERVIEW.FMT | OVER                  | Section 8.4   |
+       | POST              | POST                  | Section 6.3.1 |
+       | ARTICLE           | READER                | Section 6.2.1 |
+       | BODY              | READER                | Section 6.2.3 |
+       | DATE              | READER                | Section 7.1   |
+       | GROUP             | READER                | Section 6.1.1 |
+       | LAST              | READER                | Section 6.1.3 |
+       | LISTGROUP         | READER                | Section 6.1.2 |
+       | NEWGROUPS         | READER                | Section 7.3   |
+       | NEXT              | READER                | Section 6.1.4 |
+       +-------------------+-----------------------+---------------+
+
+##################################################################################

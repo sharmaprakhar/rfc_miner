@@ -1,0 +1,1510 @@
+
+   +-----------------+-------------------------------------------------+
+   | Data Type       | Definition                                      |
+   +-----------------+-------------------------------------------------+
+   | int32_t         | typedef int int32_t;                            |
+   |                 |                                                 |
+   | uint32_t        | typedef unsigned int uint32_t;                  |
+   |                 |                                                 |
+   | int64_t         | typedef hyper int64_t;                          |
+   |                 |                                                 |
+   | uint64_t        | typedef unsigned hyper uint64_t;                |
+   |                 |                                                 |
+   | attrlist4       | typedef opaque attrlist4<>;                     |
+   |                 |                                                 |
+   |                 | Used for file/directory attributes.             |
+   |                 |                                                 |
+   | bitmap4         | typedef uint32_t bitmap4<>;                     |
+   |                 |                                                 |
+   |                 | Used in attribute array encoding.               |
+   |                 |                                                 |
+   | changeid4       | typedef uint64_t changeid4;                     |
+   |                 |                                                 |
+   |                 | Used in the definition of change_info4.         |
+   |                 |                                                 |
+   | clientid4       | typedef uint64_t clientid4;                     |
+   |                 |                                                 |
+   |                 | Shorthand reference to client identification.   |
+   |                 |                                                 |
+   | count4          | typedef uint32_t count4;                        |
+   |                 |                                                 |
+   |                 | Various count parameters (READ, WRITE, COMMIT). |
+   |                 |                                                 |
+   | length4         | typedef uint64_t length4;                       |
+   |                 |                                                 |
+   |                 | Describes LOCK lengths.                         |
+   |                 |                                                 |
+
+##################################################################################
+
+   | mode4           | typedef uint32_t mode4;                         |
+   |                 |                                                 |
+   |                 | Mode attribute data type.                       |
+   |                 |                                                 |
+   | nfs_cookie4     | typedef uint64_t nfs_cookie4;                   |
+   |                 |                                                 |
+   |                 | Opaque cookie value for READDIR.                |
+   |                 |                                                 |
+   | nfs_fh4         | typedef opaque nfs_fh4<NFS4_FHSIZE>;            |
+   |                 |                                                 |
+   |                 | Filehandle definition.                          |
+   |                 |                                                 |
+   | nfs_ftype4      | enum nfs_ftype4;                                |
+   |                 |                                                 |
+   |                 | Various defined file types.                     |
+   |                 |                                                 |
+   | nfsstat4        | enum nfsstat4;                                  |
+   |                 |                                                 |
+   |                 | Return value for operations.                    |
+   |                 |                                                 |
+   | nfs_lease4      | typedef uint32_t nfs_lease4;                    |
+   |                 |                                                 |
+   |                 | Duration of a lease in seconds.                 |
+   |                 |                                                 |
+   | offset4         | typedef uint64_t offset4;                       |
+   |                 |                                                 |
+   |                 | Various offset designations (READ, WRITE, LOCK, |
+   |                 | COMMIT).                                        |
+   |                 |                                                 |
+   | qop4            | typedef uint32_t qop4;                          |
+   |                 |                                                 |
+   |                 | Quality of protection designation in SECINFO.   |
+   |                 |                                                 |
+   | sec_oid4        | typedef opaque sec_oid4<>;                      |
+   |                 |                                                 |
+   |                 | Security Object Identifier.  The sec_oid4 data  |
+   |                 | type is not really opaque.  Instead, it         |
+   |                 | contains an ASN.1 OBJECT IDENTIFIER as used by  |
+   |                 | GSS-API in the mech_type argument to            |
+   |                 | GSS_Init_sec_context.  See [RFC2743] for        |
+   |                 | details.                                        |
+   |                 |                                                 |
+   | seqid4          | typedef uint32_t seqid4;                        |
+   |                 |                                                 |
+   |                 | Sequence identifier used for file locking.      |
+   |                 |                                                 |
+
+##################################################################################
+
+   | utf8string      | typedef opaque utf8string<>;                    |
+   |                 |                                                 |
+   |                 | UTF-8 encoding for strings.                     |
+   |                 |                                                 |
+   | utf8str_cis     | typedef utf8string utf8str_cis;                 |
+   |                 |                                                 |
+   |                 | Case-insensitive UTF-8 string.                  |
+   |                 |                                                 |
+   | utf8str_cs      | typedef utf8string utf8str_cs;                  |
+   |                 |                                                 |
+   |                 | Case-sensitive UTF-8 string.                    |
+   |                 |                                                 |
+   | utf8str_mixed   | typedef utf8string utf8str_mixed;               |
+   |                 |                                                 |
+   |                 | UTF-8 strings with a case-sensitive prefix and  |
+   |                 | a case-insensitive suffix.                      |
+   |                 |                                                 |
+   | component4      | typedef utf8str_cs component4;                  |
+   |                 |                                                 |
+   |                 | Represents pathname components.                 |
+   |                 |                                                 |
+   | linktext4       | typedef opaque linktext4<>;                     |
+   |                 |                                                 |
+   |                 | Symbolic link contents ("symbolic link" is      |
+   |                 | defined in an Open Group [openg_symlink]        |
+   |                 | standard).                                      |
+   |                 |                                                 |
+   | ascii_REQUIRED4 | typedef utf8string ascii_REQUIRED4;             |
+   |                 |                                                 |
+   |                 | String is sent as ASCII and thus is             |
+   |                 | automatically UTF-8.                            |
+   |                 |                                                 |
+   | pathname4       | typedef component4 pathname4<>;                 |
+   |                 |                                                 |
+   |                 | Represents pathname for fs_locations.           |
+   |                 |                                                 |
+   | nfs_lockid4     | typedef uint64_t nfs_lockid4;                   |
+   |                 |                                                 |
+   | verifier4       | typedef opaque verifier4[NFS4_VERIFIER_SIZE];   |
+   |                 |                                                 |
+   |                 | Verifier used for various operations (COMMIT,   |
+   |                 | CREATE, OPEN, READDIR, WRITE)                   |
+   |                 | NFS4_VERIFIER_SIZE is defined as 8.             |
+   +-----------------+-------------------------------------------------+
+
+##################################################################################
+
+   enum time_how4 {
+           SET_TO_SERVER_TIME4 = 0,
+           SET_TO_CLIENT_TIME4 = 1
+   };
+
+##################################################################################
+
+                       0            1
+     +-----------+-----------+-----------+--
+     |  count    | 31  ..  0 | 63  .. 32 |
+     +-----------+-----------+-----------+--
+
+##################################################################################
+
+     +--------+-------+----------------------+-----------------------+
+     | Number | Name  | Mechanism's OID      | RPCSEC_GSS service    |
+     +--------+-------+----------------------+-----------------------+
+     | 390003 | krb5  | 1.2.840.113554.1.2.2 | rpc_gss_svc_none      |
+     | 390004 | krb5i | 1.2.840.113554.1.2.2 | rpc_gss_svc_integrity |
+     | 390005 | krb5p | 1.2.840.113554.1.2.2 | rpc_gss_svc_privacy   |
+     +--------+-------+----------------------+-----------------------+
+
+##################################################################################
+
+     [volatile bit = 1 | server boot time | slot | generation number]
+
+##################################################################################
+
+        +----------+-----------+---------------------------------+
+        | LOOKUP   | "foo"     | ; look up file                  |
+        | GETATTR  | attrbits  |                                 |
+        | OPENATTR |           | ; access foo's named attributes |
+        | LOOKUP   | "x11icon" | ; look up specific attribute    |
+        | READ     | 0,4096    | ; read stream of bytes          |
+        +----------+-----------+---------------------------------+
+
+##################################################################################
+
+      +-----------------+----+------------+-----+-------------------+
+      | Name            | ID | Data Type  | Acc | Defined in        |
+      +-----------------+----+------------+-----+-------------------+
+      | supported_attrs | 0  | bitmap4    | R   | Section 5.8.1.1   |
+      | type            | 1  | nfs_ftype4 | R   | Section 5.8.1.2   |
+      | fh_expire_type  | 2  | uint32_t   | R   | Section 5.8.1.3   |
+      | change          | 3  | changeid4  | R   | Section 5.8.1.4   |
+      | size            | 4  | uint64_t   | R W | Section 5.8.1.5   |
+      | link_support    | 5  | bool       | R   | Section 5.8.1.6   |
+      | symlink_support | 6  | bool       | R   | Section 5.8.1.7   |
+      | named_attr      | 7  | bool       | R   | Section 5.8.1.8   |
+      | fsid            | 8  | fsid4      | R   | Section 5.8.1.9   |
+      | unique_handles  | 9  | bool       | R   | Section 5.8.1.10  |
+      | lease_time      | 10 | nfs_lease4 | R   | Section 5.8.1.11  |
+      | rdattr_error    | 11 | nfsstat4   | R   | Section 5.8.1.12  |
+      | filehandle      | 19 | nfs_fh4    | R   | Section 5.8.1.13  |
+      +-----------------+----+------------+-----+-------------------+
+
+##################################################################################
+
+   +-------------------+----+-----------------+-----+------------------+
+   | Name              | ID | Data Type       | Acc | Defined in       |
+   +-------------------+----+-----------------+-----+------------------+
+   | acl               | 12 | nfsace4<>       | R W | Section 6.2.1    |
+   | aclsupport        | 13 | uint32_t        | R   | Section 6.2.1.2  |
+   | archive           | 14 | bool            | R W | Section 5.8.2.1  |
+   | cansettime        | 15 | bool            | R   | Section 5.8.2.2  |
+   | case_insensitive  | 16 | bool            | R   | Section 5.8.2.3  |
+   | case_preserving   | 17 | bool            | R   | Section 5.8.2.4  |
+   | chown_restricted  | 18 | bool            | R   | Section 5.8.2.5  |
+   | fileid            | 20 | uint64_t        | R   | Section 5.8.2.6  |
+   | files_avail       | 21 | uint64_t        | R   | Section 5.8.2.7  |
+   | files_free        | 22 | uint64_t        | R   | Section 5.8.2.8  |
+   | files_total       | 23 | uint64_t        | R   | Section 5.8.2.9  |
+
+##################################################################################
+
+   | fs_locations      | 24 | fs_locations4   | R   | Section 5.8.2.10 |
+   | hidden            | 25 | bool            | R W | Section 5.8.2.11 |
+   | homogeneous       | 26 | bool            | R   | Section 5.8.2.12 |
+   | maxfilesize       | 27 | uint64_t        | R   | Section 5.8.2.13 |
+   | maxlink           | 28 | uint32_t        | R   | Section 5.8.2.14 |
+   | maxname           | 29 | uint32_t        | R   | Section 5.8.2.15 |
+   | maxread           | 30 | uint64_t        | R   | Section 5.8.2.16 |
+   | maxwrite          | 31 | uint64_t        | R   | Section 5.8.2.17 |
+   | mimetype          | 32 | ascii_          | R W | Section 5.8.2.18 |
+   |                   |    |   REQUIRED4<>   |     |                  |
+   | mode              | 33 | mode4           | R W | Section 6.2.2    |
+   | mounted_on_fileid | 55 | uint64_t        | R   | Section 5.8.2.19 |
+   | no_trunc          | 34 | bool            | R   | Section 5.8.2.20 |
+   | numlinks          | 35 | uint32_t        | R   | Section 5.8.2.21 |
+   | owner             | 36 | utf8str_mixed   | R W | Section 5.8.2.22 |
+   | owner_group       | 37 | utf8str_mixed   | R W | Section 5.8.2.23 |
+   | quota_avail_hard  | 38 | uint64_t        | R   | Section 5.8.2.24 |
+   | quota_avail_soft  | 39 | uint64_t        | R   | Section 5.8.2.25 |
+   | quota_used        | 40 | uint64_t        | R   | Section 5.8.2.26 |
+   | rawdev            | 41 | specdata4       | R   | Section 5.8.2.27 |
+   | space_avail       | 42 | uint64_t        | R   | Section 5.8.2.28 |
+   | space_free        | 43 | uint64_t        | R   | Section 5.8.2.29 |
+   | space_total       | 44 | uint64_t        | R   | Section 5.8.2.30 |
+   | space_used        | 45 | uint64_t        | R   | Section 5.8.2.31 |
+   | system            | 46 | bool            | R W | Section 5.8.2.32 |
+   | time_access       | 47 | nfstime4        | R   | Section 5.8.2.33 |
+   | time_access_set   | 48 | settime4        | W   | Section 5.8.2.34 |
+   | time_backup       | 49 | nfstime4        | R W | Section 5.8.2.35 |
+   | time_create       | 50 | nfstime4        | R W | Section 5.8.2.36 |
+   | time_delta        | 51 | nfstime4        | R   | Section 5.8.2.37 |
+   | time_metadata     | 52 | nfstime4        | R   | Section 5.8.2.38 |
+   | time_modify       | 53 | nfstime4        | R   | Section 5.8.2.39 |
+   | time_modify_set   | 54 | settime4        | W   | Section 5.8.2.40 |
+   +-------------------+----+-----------------+-----+------------------+
+
+##################################################################################
+
+   const ACE4_ACCESS_ALLOWED_ACE_TYPE      = 0x00000000;
+   const ACE4_ACCESS_DENIED_ACE_TYPE       = 0x00000001;
+   const ACE4_SYSTEM_AUDIT_ACE_TYPE        = 0x00000002;
+   const ACE4_SYSTEM_ALARM_ACE_TYPE        = 0x00000003;
+
+   All four bit types are permitted in the acl attribute.
+
+   +------------------------------+--------------+---------------------+
+   | Value                        | Abbreviation | Description         |
+   +------------------------------+--------------+---------------------+
+   | ACE4_ACCESS_ALLOWED_ACE_TYPE | ALLOW        | Explicitly grants   |
+   |                              |              | the access defined  |
+   |                              |              | in acemask4 to the  |
+   |                              |              | file or directory.  |
+   |                              |              |                     |
+   | ACE4_ACCESS_DENIED_ACE_TYPE  | DENY         | Explicitly denies   |
+   |                              |              | the access defined  |
+   |                              |              | in acemask4 to the  |
+   |                              |              | file or directory.  |
+   |                              |              |                     |
+   | ACE4_SYSTEM_AUDIT_ACE_TYPE   | AUDIT        | LOG (in a system-   |
+   |                              |              | dependent way) any  |
+   |                              |              | access attempt to a |
+   |                              |              | file or directory   |
+   |                              |              | that uses any of    |
+   |                              |              | the access methods  |
+   |                              |              | specified in        |
+   |                              |              | acemask4.           |
+   |                              |              |                     |
+   | ACE4_SYSTEM_ALARM_ACE_TYPE   | ALARM        | Generate a system   |
+   |                              |              | ALARM (system       |
+   |                              |              | dependent) when any |
+   |                              |              | access attempt is   |
+   |                              |              | made to a file or   |
+   |                              |              | directory for the   |
+   |                              |              | access methods      |
+   |                              |              | specified in        |
+   |                              |              | acemask4.           |
+   +------------------------------+--------------+---------------------+
+
+##################################################################################
+
+   const ACL4_SUPPORT_ALLOW_ACL    = 0x00000001;
+   const ACL4_SUPPORT_DENY_ACL     = 0x00000002;
+   const ACL4_SUPPORT_AUDIT_ACL    = 0x00000004;
+   const ACL4_SUPPORT_ALARM_ACL    = 0x00000008;
+
+##################################################################################
+
+   const ACE4_READ_DATA            = 0x00000001;
+   const ACE4_LIST_DIRECTORY       = 0x00000001;
+   const ACE4_WRITE_DATA           = 0x00000002;
+   const ACE4_ADD_FILE             = 0x00000002;
+   const ACE4_APPEND_DATA          = 0x00000004;
+   const ACE4_ADD_SUBDIRECTORY     = 0x00000004;
+   const ACE4_READ_NAMED_ATTRS     = 0x00000008;
+   const ACE4_WRITE_NAMED_ATTRS    = 0x00000010;
+   const ACE4_EXECUTE              = 0x00000020;
+   const ACE4_DELETE_CHILD         = 0x00000040;
+   const ACE4_READ_ATTRIBUTES      = 0x00000080;
+   const ACE4_WRITE_ATTRIBUTES     = 0x00000100;
+
+   const ACE4_DELETE               = 0x00010000;
+   const ACE4_READ_ACL             = 0x00020000;
+   const ACE4_WRITE_ACL            = 0x00040000;
+   const ACE4_WRITE_OWNER          = 0x00080000;
+   const ACE4_SYNCHRONIZE          = 0x00100000;
+
+##################################################################################
+
+   const ACE4_FILE_INHERIT_ACE             = 0x00000001;
+   const ACE4_DIRECTORY_INHERIT_ACE        = 0x00000002;
+   const ACE4_NO_PROPAGATE_INHERIT_ACE     = 0x00000004;
+   const ACE4_INHERIT_ONLY_ACE             = 0x00000008;
+   const ACE4_SUCCESSFUL_ACCESS_ACE_FLAG   = 0x00000010;
+   const ACE4_FAILED_ACCESS_ACE_FLAG       = 0x00000020;
+   const ACE4_IDENTIFIER_GROUP             = 0x00000040;
+
+##################################################################################
+
+   +---------------+---------------------------------------------------+
+   | Who           | Description                                       |
+   +---------------+---------------------------------------------------+
+   | OWNER         | The owner of the file.                            |
+   | GROUP         | The group associated with the file.               |
+   | EVERYONE      | The world, including the owner and owning group.  |
+   | INTERACTIVE   | Accessed from an interactive terminal.            |
+   | NETWORK       | Accessed via the network.                         |
+   | DIALUP        | Accessed as a dialup user to the server.          |
+   | BATCH         | Accessed from a batch job.                        |
+   | ANONYMOUS     | Accessed without any authentication.              |
+   | AUTHENTICATED | Any authenticated user (opposite of ANONYMOUS).   |
+   | SERVICE       | Access from a system service.                     |
+   +---------------+---------------------------------------------------+
+
+##################################################################################
+
+   const MODE4_SUID = 0x800;  /* set user id on execution */
+   const MODE4_SGID = 0x400;  /* set group id on execution */
+   const MODE4_SVTX = 0x200;  /* save text even after use */
+   const MODE4_RUSR = 0x100;  /* read permission: owner */
+   const MODE4_WUSR = 0x080;  /* write permission: owner */
+   const MODE4_XUSR = 0x040;  /* execute permission: owner */
+   const MODE4_RGRP = 0x020;  /* read permission: group */
+   const MODE4_WGRP = 0x010;  /* write permission: group */
+   const MODE4_XGRP = 0x008;  /* execute permission: group */
+
+##################################################################################
+
+   const MODE4_ROTH = 0x004;  /* read permission: other */
+   const MODE4_WOTH = 0x002;  /* write permission: other */
+   const MODE4_XOTH = 0x001;  /* execute permission: other */
+
+##################################################################################
+
+   o  PUTROOTFH --> NFS_OK.  The current fh is now the root of the
+      pseudo-fs.
+
+   o  LOOKUP "this" --> NFS_OK.  The current fh is for /this and is
+      within the pseudo-fs.
+
+   o  LOOKUP "is" --> NFS_OK.  The current fh is for /this/is and is
+      within the pseudo-fs.
+
+   o  LOOKUP "the" --> NFS_OK.  The current fh is for /this/is/the and
+      is within the pseudo-fs.
+
+   o  LOOKUP "path" --> NFS_OK.  The current fh is for /this/is/the/path
+      and is within a new, absent file system, but ... the client will
+      never see the value of that fh.
+
+##################################################################################
+
+   OP01:  PUTROOTFH --> NFS_OK
+
+   -  The current fh is at the root of the pseudo-fs.
+
+   OP02:  GETATTR(fsid) --> NFS_OK
+
+##################################################################################
+
+   OP03:  LOOKUP "this" --> NFS_OK
+
+   OP04:  GETATTR(fsid) --> NFS_OK
+
+##################################################################################
+
+   OP05:  GETFH --> NFS_OK
+
+   -  The current fh is for /this and is within the pseudo-fs.
+
+   OP06:  LOOKUP "is" --> NFS_OK
+
+   -  The current fh is for /this/is and is within the pseudo-fs.
+
+   OP07:  GETATTR(fsid) --> NFS_OK
+
+##################################################################################
+
+   OP08:  GETFH --> NFS_OK
+
+   -  The current fh is for /this/is and is within the pseudo-fs.
+
+   OP09:  LOOKUP "the" --> NFS_OK
+
+   -  The current fh is for /this/is/the and is within the pseudo-fs.
+
+   OP10:  GETATTR(fsid) --> NFS_OK
+
+##################################################################################
+
+   OP11:  GETFH --> NFS_OK
+
+   -  The current fh is for /this/is/the and is within the pseudo-fs.
+
+   OP12:  LOOKUP "path" --> NFS_OK
+
+##################################################################################
+
+   OP13:  GETATTR(fsid, fs_locations) --> NFS_OK
+
+##################################################################################
+
+   OP14:  GETFH --> NFS4ERR_MOVED
+
+##################################################################################
+
+   o  PUTROOTFH --> NFS_OK.  The current fh is at the root of the
+      pseudo-fs.
+
+   o  LOOKUP "this" --> NFS_OK.  The current fh is for /this and is
+      within the pseudo-fs.
+
+   o  LOOKUP "is" --> NFS_OK.  The current fh is for /this/is and is
+      within the pseudo-fs.
+
+   o  LOOKUP "the" --> NFS_OK.  The current fh is for /this/is/the and
+      is within the pseudo-fs.
+
+##################################################################################
+
+   o  READDIR(rdattr_error, fsid, size, time_modify, mounted_on_fileid)
+      --> NFS_OK.  The attributes for the directory entry with the
+      component named "path" will only contain rdattr_error with the
+      value NFS4ERR_MOVED, together with an fsid value and a value for
+      mounted_on_fileid.
+
+##################################################################################
+
+   o  READDIR(rdattr_error, fs_locations, mounted_on_fileid, fsid, size,
+      time_modify) --> NFS_OK.  The attributes will be as shown below.
+
+##################################################################################
+
+     if (request.access == 0)
+             return (NFS4ERR_INVAL)
+     else if ((request.access & file_state.deny) ||
+         (request.deny & file_state.access))
+             return (NFS4ERR_DENIED)
+
+##################################################################################
+
+   const OPEN4_SHARE_ACCESS_READ   = 0x00000001;
+   const OPEN4_SHARE_ACCESS_WRITE  = 0x00000002;
+   const OPEN4_SHARE_ACCESS_BOTH   = 0x00000003;
+
+   const OPEN4_SHARE_DENY_NONE     = 0x00000000;
+   const OPEN4_SHARE_DENY_READ     = 0x00000001;
+   const OPEN4_SHARE_DENY_WRITE    = 0x00000002;
+   const OPEN4_SHARE_DENY_BOTH     = 0x00000003;
+
+##################################################################################
+
+       if (!modified) {
+           do CB_GETATTR for change and size;
+
+           if (cc != sc)
+               modified = TRUE;
+       } else {
+           do CB_GETATTR for size;
+       }
+
+       if (modified) {
+           sc = sc + 1;
+           time_modify = time_metadata = current_time;
+           update sc, time_modify, time_metadata into file's metadata;
+       }
+
+##################################################################################
+
+       +-----------------------------+--------+-------------------+
+       | Error                       | Number | Description       |
+       +-----------------------------+--------+-------------------+
+       | NFS4_OK                     | 0      | Section 13.1.3.1  |
+       | NFS4ERR_ACCESS              | 13     | Section 13.1.6.1  |
+       | NFS4ERR_ADMIN_REVOKED       | 10047  | Section 13.1.5.1  |
+       | NFS4ERR_ATTRNOTSUPP         | 10032  | Section 13.1.11.1 |
+       | NFS4ERR_BADCHAR             | 10040  | Section 13.1.7.1  |
+       | NFS4ERR_BADHANDLE           | 10001  | Section 13.1.2.1  |
+       | NFS4ERR_BADNAME             | 10041  | Section 13.1.7.2  |
+       | NFS4ERR_BADOWNER            | 10039  | Section 13.1.11.2 |
+       | NFS4ERR_BADTYPE             | 10007  | Section 13.1.4.1  |
+       | NFS4ERR_BADXDR              | 10036  | Section 13.1.1.1  |
+       | NFS4ERR_BAD_COOKIE          | 10003  | Section 13.1.1.2  |
+       | NFS4ERR_BAD_RANGE           | 10042  | Section 13.1.8.1  |
+       | NFS4ERR_BAD_SEQID           | 10026  | Section 13.1.8.2  |
+       | NFS4ERR_BAD_STATEID         | 10025  | Section 13.1.5.2  |
+       | NFS4ERR_CB_PATH_DOWN        | 10048  | Section 13.1.12.1 |
+       | NFS4ERR_CLID_INUSE          | 10017  | Section 13.1.10.1 |
+       | NFS4ERR_DEADLOCK            | 10045  | Section 13.1.8.3  |
+       | NFS4ERR_DELAY               | 10008  | Section 13.1.1.3  |
+       | NFS4ERR_DENIED              | 10010  | Section 13.1.8.4  |
+       | NFS4ERR_DQUOT               | 69     | Section 13.1.4.2  |
+       | NFS4ERR_EXIST               | 17     | Section 13.1.4.3  |
+       | NFS4ERR_EXPIRED             | 10011  | Section 13.1.5.3  |
+       | NFS4ERR_FBIG                | 27     | Section 13.1.4.4  |
+       | NFS4ERR_FHEXPIRED           | 10014  | Section 13.1.2.2  |
+       | NFS4ERR_FILE_OPEN           | 10046  | Section 13.1.4.5  |
+       | NFS4ERR_GRACE               | 10013  | Section 13.1.9.1  |
+       | NFS4ERR_INVAL               | 22     | Section 13.1.1.4  |
+       | NFS4ERR_IO                  | 5      | Section 13.1.4.6  |
+       | NFS4ERR_ISDIR               | 21     | Section 13.1.2.3  |
+       | NFS4ERR_LEASE_MOVED         | 10031  | Section 13.1.5.4  |
+       | NFS4ERR_LOCKED              | 10012  | Section 13.1.8.5  |
+       | NFS4ERR_LOCKS_HELD          | 10037  | Section 13.1.8.6  |
+       | NFS4ERR_LOCK_NOTSUPP        | 10043  | Section 13.1.8.7  |
+       | NFS4ERR_LOCK_RANGE          | 10028  | Section 13.1.8.8  |
+       | NFS4ERR_MINOR_VERS_MISMATCH | 10021  | Section 13.1.3.2  |
+       | NFS4ERR_MLINK               | 31     | Section 13.1.4.7  |
+       | NFS4ERR_MOVED               | 10019  | Section 13.1.2.4  |
+       | NFS4ERR_NAMETOOLONG         | 63     | Section 13.1.7.3  |
+       | NFS4ERR_NOENT               | 2      | Section 13.1.4.8  |
+       | NFS4ERR_NOFILEHANDLE        | 10020  | Section 13.1.2.5  |
+       | NFS4ERR_NOSPC               | 28     | Section 13.1.4.9  |
+       | NFS4ERR_NOTDIR              | 20     | Section 13.1.2.6  |
+       | NFS4ERR_NOTEMPTY            | 66     | Section 13.1.4.10 |
+
+##################################################################################
+
+       | NFS4ERR_NOTSUPP             | 10004  | Section 13.1.1.5  |
+       | NFS4ERR_NOT_SAME            | 10027  | Section 13.1.11.3 |
+       | NFS4ERR_NO_GRACE            | 10033  | Section 13.1.9.2  |
+       | NFS4ERR_NXIO                | 6      | Section 13.1.4.11 |
+       | NFS4ERR_OLD_STATEID         | 10024  | Section 13.1.5.5  |
+       | NFS4ERR_OPENMODE            | 10038  | Section 13.1.8.9  |
+       | NFS4ERR_OP_ILLEGAL          | 10044  | Section 13.1.3.3  |
+       | NFS4ERR_PERM                | 1      | Section 13.1.6.2  |
+       | NFS4ERR_RECLAIM_BAD         | 10034  | Section 13.1.9.3  |
+       | NFS4ERR_RECLAIM_CONFLICT    | 10035  | Section 13.1.9.4  |
+       | NFS4ERR_RESOURCE            | 10018  | Section 13.1.3.4  |
+       | NFS4ERR_RESTOREFH           | 10030  | Section 13.1.4.12 |
+       | NFS4ERR_ROFS                | 30     | Section 13.1.4.13 |
+       | NFS4ERR_SAME                | 10009  | Section 13.1.11.4 |
+       | NFS4ERR_SERVERFAULT         | 10006  | Section 13.1.1.6  |
+       | NFS4ERR_SHARE_DENIED        | 10015  | Section 13.1.8.10 |
+       | NFS4ERR_STALE               | 70     | Section 13.1.2.7  |
+       | NFS4ERR_STALE_CLIENTID      | 10022  | Section 13.1.10.2 |
+       | NFS4ERR_STALE_STATEID       | 10023  | Section 13.1.5.6  |
+       | NFS4ERR_SYMLINK             | 10029  | Section 13.1.2.8  |
+       | NFS4ERR_TOOSMALL            | 10005  | Section 13.1.1.7  |
+       | NFS4ERR_WRONGSEC            | 10016  | Section 13.1.6.3  |
+       | NFS4ERR_XDEV                | 18     | Section 13.1.4.14 |
+       +-----------------------------+--------+-------------------+
+
+##################################################################################
+
+   +---------------------+---------------------------------------------+
+   | Operation           | Errors                                      |
+   +---------------------+---------------------------------------------+
+   | ACCESS              | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_INVAL,           |
+   |                     | NFS4ERR_IO, NFS4ERR_MOVED,                  |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_RESOURCE,     |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+   | CLOSE               | NFS4ERR_ADMIN_REVOKED, NFS4ERR_BADHANDLE,   |
+   |                     | NFS4ERR_BAD_SEQID, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_INVAL, NFS4ERR_ISDIR,               |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_LOCKS_HELD,    |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_OLD_STATEID, NFS4ERR_RESOURCE,      |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | COMMIT              | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_INVAL,           |
+   |                     | NFS4ERR_IO, NFS4ERR_ISDIR, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_RESOURCE,     |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_STALE, NFS4ERR_SYMLINK              |
+   |                     |                                             |
+   | CREATE              | NFS4ERR_ACCESS, NFS4ERR_ATTRNOTSUPP,        |
+   |                     | NFS4ERR_BADCHAR, NFS4ERR_BADHANDLE,         |
+   |                     | NFS4ERR_BADNAME, NFS4ERR_BADOWNER,          |
+   |                     | NFS4ERR_BADTYPE, NFS4ERR_BADXDR,            |
+   |                     | NFS4ERR_DELAY, NFS4ERR_DQUOT,               |
+   |                     | NFS4ERR_EXIST, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NAMETOOLONG, NFS4ERR_NOFILEHANDLE,  |
+   |                     | NFS4ERR_NOSPC, NFS4ERR_NOTDIR,              |
+   |                     | NFS4ERR_PERM, NFS4ERR_RESOURCE,             |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_STALE                               |
+
+##################################################################################
+
+   |                     |                                             |
+   | DELEGPURGE          | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_NOTSUPP,       |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE_CLIENTID                      |
+   |                     |                                             |
+   | DELEGRETURN         | NFS4ERR_ADMIN_REVOKED, NFS4ERR_BAD_STATEID, |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_INVAL,             |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_MOVED,         |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOTSUPP,      |
+   |                     | NFS4ERR_OLD_STATEID, NFS4ERR_RESOURCE,      |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | GETATTR             | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_GRACE,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_RESOURCE,     |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+   | GETFH               | NFS4ERR_BADHANDLE, NFS4ERR_FHEXPIRED,       |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE                               |
+   |                     |                                             |
+   | ILLEGAL             | NFS4ERR_BADXDR, NFS4ERR_OP_ILLEGAL          |
+   |                     |                                             |
+   | LINK                | NFS4ERR_ACCESS, NFS4ERR_BADCHAR,            |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_DQUOT, NFS4ERR_EXIST,               |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_FILE_OPEN,       |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_ISDIR,   |
+   |                     | NFS4ERR_MLINK, NFS4ERR_MOVED,               |
+   |                     | NFS4ERR_NAMETOOLONG, NFS4ERR_NOENT,         |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOSPC,        |
+   |                     | NFS4ERR_NOTDIR, NFS4ERR_NOTSUPP,            |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_ROFS,             |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_WRONGSEC, NFS4ERR_XDEV              |
+   |                     |                                             |
+
+##################################################################################
+
+   | LOCK                | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BAD_RANGE,       |
+   |                     | NFS4ERR_BAD_SEQID, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DEADLOCK,           |
+   |                     | NFS4ERR_DELAY, NFS4ERR_DENIED,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL,               |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCK_NOTSUPP, NFS4ERR_LOCK_RANGE,   |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NO_GRACE, NFS4ERR_OLD_STATEID,      |
+   |                     | NFS4ERR_OPENMODE, NFS4ERR_RECLAIM_BAD,      |
+   |                     | NFS4ERR_RECLAIM_CONFLICT, NFS4ERR_RESOURCE, |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_CLIENTID,                     |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | LOCKT               | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_BAD_RANGE, NFS4ERR_BADXDR,          |
+   |                     | NFS4ERR_DELAY, NFS4ERR_DENIED,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL,               |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCK_RANGE, NFS4ERR_MOVED,          |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_RESOURCE,     |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_CLIENTID                      |
+   |                     |                                             |
+   | LOCKU               | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BAD_RANGE,       |
+   |                     | NFS4ERR_BAD_SEQID, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL,               |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCK_RANGE, NFS4ERR_MOVED,          |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_OLD_STATEID,  |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE, NFS4ERR_STALE_STATEID        |
+   |                     |                                             |
+
+##################################################################################
+
+   | LOOKUP              | NFS4ERR_ACCESS, NFS4ERR_BADCHAR,            |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_INVAL,           |
+   |                     | NFS4ERR_IO, NFS4ERR_MOVED,                  |
+   |                     | NFS4ERR_NAMETOOLONG, NFS4ERR_NOENT,         |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOTDIR,       |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE, NFS4ERR_SYMLINK,             |
+   |                     | NFS4ERR_WRONGSEC                            |
+   |                     |                                             |
+   | LOOKUPP             | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_DELAY, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_IO, NFS4ERR_MOVED, NFS4ERR_NOENT,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOTDIR,       |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE, NFS4ERR_SYMLINK,             |
+   |                     | NFS4ERR_WRONGSEC                            |
+   |                     |                                             |
+   | NVERIFY             | NFS4ERR_ACCESS, NFS4ERR_ATTRNOTSUPP,        |
+   |                     | NFS4ERR_BADCHAR, NFS4ERR_BADHANDLE,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_GRACE,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_SAME,         |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+   | OPEN                | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_ATTRNOTSUPP, NFS4ERR_BADCHAR,       |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADOWNER, NFS4ERR_BAD_SEQID,        |
+   |                     | NFS4ERR_BAD_STATEID, NFS4ERR_BADXDR,        |
+   |                     | NFS4ERR_DELAY, NFS4ERR_DQUOT,               |
+   |                     | NFS4ERR_EXIST, NFS4ERR_EXPIRED,             |
+   |                     | NFS4ERR_FBIG, NFS4ERR_FHEXPIRED,            |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL, NFS4ERR_IO,   |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_MOVED,               |
+   |                     | NFS4ERR_NAMETOOLONG, NFS4ERR_NOENT,         |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NO_GRACE,     |
+   |                     | NFS4ERR_NOSPC, NFS4ERR_NOTDIR,              |
+   |                     | NFS4ERR_NOTSUPP, NFS4ERR_OLD_STATEID,       |
+   |                     | NFS4ERR_PERM, NFS4ERR_RECLAIM_BAD,          |
+   |                     | NFS4ERR_RECLAIM_CONFLICT, NFS4ERR_RESOURCE, |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_SHARE_DENIED, NFS4ERR_STALE,        |
+   |                     | NFS4ERR_STALE_CLIENTID, NFS4ERR_SYMLINK,    |
+   |                     | NFS4ERR_WRONGSEC                            |
+   |                     |                                             |
+
+##################################################################################
+
+   | OPENATTR            | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_DQUOT, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_IO, NFS4ERR_MOVED, NFS4ERR_NOENT,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOSPC,        |
+   |                     | NFS4ERR_NOTSUPP, NFS4ERR_RESOURCE,          |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_STALE                               |
+   |                     |                                             |
+   | OPEN_CONFIRM        | NFS4ERR_ADMIN_REVOKED, NFS4ERR_BADHANDLE,   |
+   |                     | NFS4ERR_BAD_SEQID, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_EXPIRED,            |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_INVAL,           |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_OLD_STATEID, NFS4ERR_RESOURCE,      |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | OPEN_DOWNGRADE      | NFS4ERR_ADMIN_REVOKED, NFS4ERR_BADHANDLE,   |
+   |                     | NFS4ERR_BAD_SEQID, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_INVAL, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCKS_HELD, NFS4ERR_MOVED,          |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_OLD_STATEID,  |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_ROFS,             |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | PUTFH               | NFS4ERR_BADHANDLE, NFS4ERR_BADXDR,          |
+   |                     | NFS4ERR_DELAY, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_MOVED, NFS4ERR_SERVERFAULT,         |
+   |                     | NFS4ERR_STALE, NFS4ERR_WRONGSEC             |
+   |                     |                                             |
+   | PUTPUBFH            | NFS4ERR_DELAY, NFS4ERR_SERVERFAULT,         |
+   |                     | NFS4ERR_WRONGSEC                            |
+   |                     |                                             |
+   | PUTROOTFH           | NFS4ERR_DELAY, NFS4ERR_SERVERFAULT,         |
+   |                     | NFS4ERR_WRONGSEC                            |
+   |                     |                                             |
+
+##################################################################################
+
+   | READ                | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FHEXPIRED,         |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL, NFS4ERR_IO,   |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCKED, NFS4ERR_MOVED,              |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_OLD_STATEID,  |
+   |                     | NFS4ERR_OPENMODE, NFS4ERR_RESOURCE,         |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID, NFS4ERR_SYMLINK      |
+   |                     |                                             |
+   | READDIR             | NFS4ERR_ACCESS, NFS4ERR_BAD_COOKIE,         |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADXDR,          |
+   |                     | NFS4ERR_DELAY, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOTDIR,       |
+   |                     | NFS4ERR_NOT_SAME, NFS4ERR_RESOURCE,         |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_TOOSMALL                            |
+   |                     |                                             |
+   | READLINK            | NFS4ERR_ACCESS, NFS4ERR_BADHANDLE,          |
+   |                     | NFS4ERR_DELAY, NFS4ERR_FHEXPIRED,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_ISDIR,   |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NOTSUPP, NFS4ERR_RESOURCE,          |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+   | RELEASE_LOCKOWNER   | NFS4ERR_BADXDR, NFS4ERR_EXPIRED,            |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_LOCKS_HELD,    |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE_CLIENTID                      |
+   |                     |                                             |
+   | REMOVE              | NFS4ERR_ACCESS, NFS4ERR_BADCHAR,            |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_FILE_OPEN,       |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL, NFS4ERR_IO,   |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NAMETOOLONG,         |
+   |                     | NFS4ERR_NOENT, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NOTDIR, NFS4ERR_NOTEMPTY,           |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_ROFS,             |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+
+##################################################################################
+
+   | RENAME              | NFS4ERR_ACCESS, NFS4ERR_BADCHAR,            |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_DQUOT, NFS4ERR_EXIST,               |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_FILE_OPEN,       |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL, NFS4ERR_IO,   |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NAMETOOLONG,         |
+   |                     | NFS4ERR_NOENT, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NOSPC, NFS4ERR_NOTDIR,              |
+   |                     | NFS4ERR_NOTEMPTY, NFS4ERR_RESOURCE,         |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_STALE, NFS4ERR_WRONGSEC,            |
+   |                     | NFS4ERR_XDEV                                |
+   |                     |                                             |
+   | RENEW               | NFS4ERR_ACCESS, NFS4ERR_BADXDR,             |
+   |                     | NFS4ERR_CB_PATH_DOWN, NFS4ERR_EXPIRED,      |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_RESOURCE,      |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE_CLIENTID |
+   |                     |                                             |
+   | RESTOREFH           | NFS4ERR_BADHANDLE, NFS4ERR_FHEXPIRED,       |
+   |                     | NFS4ERR_MOVED, NFS4ERR_RESOURCE,            |
+   |                     | NFS4ERR_RESTOREFH, NFS4ERR_SERVERFAULT,     |
+   |                     | NFS4ERR_STALE, NFS4ERR_WRONGSEC             |
+   |                     |                                             |
+   | SAVEFH              | NFS4ERR_BADHANDLE, NFS4ERR_FHEXPIRED,       |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE                               |
+   |                     |                                             |
+   | SECINFO             | NFS4ERR_ACCESS, NFS4ERR_BADCHAR,            |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADNAME,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_INVAL,           |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NAMETOOLONG,         |
+   |                     | NFS4ERR_NOENT, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NOTDIR, NFS4ERR_RESOURCE,           |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE          |
+   |                     |                                             |
+
+##################################################################################
+
+   | SETATTR             | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_ATTRNOTSUPP, NFS4ERR_BADCHAR,       |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BADOWNER,        |
+   |                     | NFS4ERR_BAD_STATEID, NFS4ERR_BADXDR,        |
+   |                     | NFS4ERR_DELAY, NFS4ERR_DQUOT,               |
+   |                     | NFS4ERR_EXPIRED, NFS4ERR_FBIG,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_GRACE,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_ISDIR,   |
+   |                     | NFS4ERR_LEASE_MOVED, NFS4ERR_LOCKED,        |
+   |                     | NFS4ERR_MOVED, NFS4ERR_NOFILEHANDLE,        |
+   |                     | NFS4ERR_NOSPC, NFS4ERR_OLD_STATEID,         |
+   |                     | NFS4ERR_OPENMODE, NFS4ERR_PERM,             |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_ROFS,             |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE,         |
+   |                     | NFS4ERR_STALE_STATEID                       |
+   |                     |                                             |
+   | SETCLIENTID         | NFS4ERR_BADXDR, NFS4ERR_CLID_INUSE,         |
+   |                     | NFS4ERR_DELAY, NFS4ERR_INVAL,               |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT       |
+   |                     |                                             |
+   | SETCLIENTID_CONFIRM | NFS4ERR_BADXDR, NFS4ERR_CLID_INUSE,         |
+   |                     | NFS4ERR_DELAY, NFS4ERR_RESOURCE,            |
+   |                     | NFS4ERR_SERVERFAULT, NFS4ERR_STALE_CLIENTID |
+   |                     |                                             |
+   | VERIFY              | NFS4ERR_ACCESS, NFS4ERR_ATTRNOTSUPP,        |
+   |                     | NFS4ERR_BADCHAR, NFS4ERR_BADHANDLE,         |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_FHEXPIRED, NFS4ERR_GRACE,           |
+   |                     | NFS4ERR_INVAL, NFS4ERR_IO, NFS4ERR_MOVED,   |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOT_SAME,     |
+   |                     | NFS4ERR_RESOURCE, NFS4ERR_SERVERFAULT,      |
+   |                     | NFS4ERR_STALE                               |
+   |                     |                                             |
+
+##################################################################################
+
+   | WRITE               | NFS4ERR_ACCESS, NFS4ERR_ADMIN_REVOKED,      |
+   |                     | NFS4ERR_BADHANDLE, NFS4ERR_BAD_STATEID,     |
+   |                     | NFS4ERR_BADXDR, NFS4ERR_DELAY,              |
+   |                     | NFS4ERR_DQUOT, NFS4ERR_EXPIRED,             |
+   |                     | NFS4ERR_FBIG, NFS4ERR_FHEXPIRED,            |
+   |                     | NFS4ERR_GRACE, NFS4ERR_INVAL, NFS4ERR_IO,   |
+   |                     | NFS4ERR_ISDIR, NFS4ERR_LEASE_MOVED,         |
+   |                     | NFS4ERR_LOCKED, NFS4ERR_MOVED,              |
+   |                     | NFS4ERR_NOFILEHANDLE, NFS4ERR_NOSPC,        |
+   |                     | NFS4ERR_NXIO, NFS4ERR_OLD_STATEID,          |
+   |                     | NFS4ERR_OPENMODE, NFS4ERR_RESOURCE,         |
+   |                     | NFS4ERR_ROFS, NFS4ERR_SERVERFAULT,          |
+   |                     | NFS4ERR_STALE, NFS4ERR_STALE_STATEID,       |
+   |                     | NFS4ERR_SYMLINK                             |
+   |                     |                                             |
+   +---------------------+---------------------------------------------+
+
+##################################################################################
+
+   +-------------+-----------------------------------------------------+
+   | Callback    | Errors                                              |
+   | Operation   |                                                     |
+   +-------------+-----------------------------------------------------+
+   | CB_GETATTR  | NFS4ERR_BADHANDLE, NFS4ERR_BADXDR, NFS4ERR_DELAY,   |
+   |             | NFS4ERR_INVAL, NFS4ERR_SERVERFAULT                  |
+   |             |                                                     |
+   | CB_ILLEGAL  | NFS4ERR_BADXDR, NFS4ERR_OP_ILLEGAL                  |
+   |             |                                                     |
+   | CB_RECALL   | NFS4ERR_BADHANDLE, NFS4ERR_BAD_STATEID,             |
+   |             | NFS4ERR_BADXDR, NFS4ERR_DELAY, NFS4ERR_SERVERFAULT  |
+   |             |                                                     |
+   +-------------+-----------------------------------------------------+
+
+##################################################################################
+
+   +--------------------------+----------------------------------------+
+   | Error                    | Operations                             |
+   +--------------------------+----------------------------------------+
+   | NFS4ERR_ACCESS           | ACCESS, COMMIT, CREATE, GETATTR, LINK, |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, READ,         |
+   |                          | READDIR, READLINK, REMOVE, RENAME,     |
+   |                          | RENEW, SECINFO, SETATTR, VERIFY, WRITE |
+   |                          |                                        |
+   | NFS4ERR_ADMIN_REVOKED    | CLOSE, DELEGRETURN, LOCK, LOCKU, OPEN, |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE, READ,    |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_ATTRNOTSUPP      | CREATE, NVERIFY, OPEN, SETATTR, VERIFY |
+   |                          |                                        |
+   | NFS4ERR_BADCHAR          | CREATE, LINK, LOOKUP, NVERIFY, OPEN,   |
+   |                          | REMOVE, RENAME, SECINFO, SETATTR,      |
+   |                          | VERIFY                                 |
+   |                          |                                        |
+   | NFS4ERR_BADHANDLE        | ACCESS, CB_GETATTR, CB_RECALL, CLOSE,  |
+   |                          | COMMIT, CREATE, GETATTR, GETFH, LINK,  |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, OPEN_CONFIRM, |
+   |                          | OPEN_DOWNGRADE, PUTFH, READ, READDIR,  |
+   |                          | READLINK, REMOVE, RENAME, RESTOREFH,   |
+   |                          | SAVEFH, SECINFO, SETATTR, VERIFY,      |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_BADNAME          | CREATE, LINK, LOOKUP, OPEN, REMOVE,    |
+   |                          | RENAME, SECINFO                        |
+   |                          |                                        |
+   | NFS4ERR_BADOWNER         | CREATE, OPEN, SETATTR                  |
+   |                          |                                        |
+   | NFS4ERR_BADTYPE          | CREATE                                 |
+   |                          |                                        |
+   | NFS4ERR_BADXDR           | ACCESS, CB_GETATTR, CB_ILLEGAL,        |
+   |                          | CB_RECALL, CLOSE, COMMIT, CREATE,      |
+   |                          | DELEGPURGE, DELEGRETURN, GETATTR,      |
+   |                          | ILLEGAL, LINK, LOCK, LOCKT, LOCKU,     |
+   |                          | LOOKUP, NVERIFY, OPEN, OPENATTR,       |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE, PUTFH,   |
+   |                          | READ, READDIR, RELEASE_LOCKOWNER,      |
+   |                          | REMOVE, RENAME, RENEW, SECINFO,        |
+   |                          | SETATTR, SETCLIENTID,                  |
+   |                          | SETCLIENTID_CONFIRM, VERIFY, WRITE     |
+   |                          |                                        |
+
+##################################################################################
+
+   | NFS4ERR_BAD_COOKIE       | READDIR                                |
+   |                          |                                        |
+   | NFS4ERR_BAD_RANGE        | LOCK, LOCKT, LOCKU                     |
+   |                          |                                        |
+   | NFS4ERR_BAD_SEQID        | CLOSE, LOCK, LOCKU, OPEN,              |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE           |
+   |                          |                                        |
+   | NFS4ERR_BAD_STATEID      | CB_RECALL, CLOSE, DELEGRETURN, LOCK,   |
+   |                          | LOCKU, OPEN, OPEN_CONFIRM,             |
+   |                          | OPEN_DOWNGRADE, READ, SETATTR, WRITE   |
+   |                          |                                        |
+   | NFS4ERR_CB_PATH_DOWN     | RENEW                                  |
+   |                          |                                        |
+   | NFS4ERR_CLID_INUSE       | SETCLIENTID, SETCLIENTID_CONFIRM       |
+   |                          |                                        |
+   | NFS4ERR_DEADLOCK         | LOCK                                   |
+   |                          |                                        |
+   | NFS4ERR_DELAY            | ACCESS, CB_GETATTR, CB_RECALL, CLOSE,  |
+   |                          | COMMIT, CREATE, DELEGPURGE,            |
+   |                          | DELEGRETURN, GETATTR, LINK, LOCK,      |
+   |                          | LOCKT, LOCKU, LOOKUP, LOOKUPP,         |
+   |                          | NVERIFY, OPEN, OPENATTR,               |
+   |                          | OPEN_DOWNGRADE, PUTFH, PUTPUBFH,       |
+   |                          | PUTROOTFH, READ, READDIR, READLINK,    |
+   |                          | REMOVE, RENAME, SECINFO, SETATTR,      |
+   |                          | SETCLIENTID, SETCLIENTID_CONFIRM,      |
+   |                          | VERIFY, WRITE                          |
+   |                          |                                        |
+   | NFS4ERR_DENIED           | LOCK, LOCKT                            |
+   |                          |                                        |
+   | NFS4ERR_DQUOT            | CREATE, LINK, OPEN, OPENATTR, RENAME,  |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_EXIST            | CREATE, LINK, OPEN, RENAME             |
+   |                          |                                        |
+   | NFS4ERR_EXPIRED          | CLOSE, DELEGRETURN, LOCK, LOCKT,       |
+   |                          | LOCKU, OPEN, OPEN_CONFIRM,             |
+   |                          | OPEN_DOWNGRADE, READ,                  |
+   |                          | RELEASE_LOCKOWNER, RENEW, SETATTR,     |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_FBIG             | OPEN, SETATTR, WRITE                   |
+   |                          |                                        |
+
+##################################################################################
+
+   | NFS4ERR_FHEXPIRED        | ACCESS, CLOSE, COMMIT, CREATE,         |
+   |                          | GETATTR, GETFH, LINK, LOCK, LOCKT,     |
+   |                          | LOCKU, LOOKUP, LOOKUPP, NVERIFY, OPEN, |
+   |                          | OPENATTR, OPEN_CONFIRM,                |
+   |                          | OPEN_DOWNGRADE, PUTFH, READ, READDIR,  |
+   |                          | READLINK, REMOVE, RENAME, RESTOREFH,   |
+   |                          | SAVEFH, SECINFO, SETATTR, VERIFY,      |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_FILE_OPEN        | LINK, REMOVE, RENAME                   |
+   |                          |                                        |
+   | NFS4ERR_GRACE            | GETATTR, LOCK, LOCKT, LOCKU, NVERIFY,  |
+   |                          | OPEN, READ, REMOVE, RENAME, SETATTR,   |
+   |                          | VERIFY, WRITE                          |
+   |                          |                                        |
+   | NFS4ERR_INVAL            | ACCESS, CB_GETATTR, CLOSE, COMMIT,     |
+   |                          | CREATE, DELEGRETURN, GETATTR, LINK,    |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, NVERIFY,   |
+   |                          | OPEN, OPEN_CONFIRM, OPEN_DOWNGRADE,    |
+   |                          | READ, READDIR, READLINK, REMOVE,       |
+   |                          | RENAME, SECINFO, SETATTR, SETCLIENTID, |
+   |                          | VERIFY, WRITE                          |
+   |                          |                                        |
+   | NFS4ERR_IO               | ACCESS, COMMIT, CREATE, GETATTR, LINK, |
+   |                          | LOOKUP, LOOKUPP, NVERIFY, OPEN,        |
+   |                          | OPENATTR, READ, READDIR, READLINK,     |
+   |                          | REMOVE, RENAME, SETATTR, VERIFY, WRITE |
+   |                          |                                        |
+   | NFS4ERR_ISDIR            | CLOSE, COMMIT, LINK, LOCK, LOCKT,      |
+   |                          | LOCKU, OPEN, OPEN_CONFIRM, READ,       |
+   |                          | READLINK, SETATTR, WRITE               |
+   |                          |                                        |
+   | NFS4ERR_LEASE_MOVED      | CLOSE, DELEGPURGE, DELEGRETURN, LOCK,  |
+   |                          | LOCKT, LOCKU, OPEN_CONFIRM,            |
+   |                          | OPEN_DOWNGRADE, READ,                  |
+   |                          | RELEASE_LOCKOWNER, RENEW, SETATTR,     |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_LOCKED           | READ, SETATTR, WRITE                   |
+   |                          |                                        |
+   | NFS4ERR_LOCKS_HELD       | CLOSE, OPEN_DOWNGRADE,                 |
+   |                          | RELEASE_LOCKOWNER                      |
+   |                          |                                        |
+   | NFS4ERR_LOCK_NOTSUPP     | LOCK                                   |
+   |                          |                                        |
+   | NFS4ERR_LOCK_RANGE       | LOCK, LOCKT, LOCKU                     |
+   |                          |                                        |
+   | NFS4ERR_MLINK            | LINK                                   |
+
+##################################################################################
+
+   |                          |                                        |
+   | NFS4ERR_MOVED            | ACCESS, CLOSE, COMMIT, CREATE,         |
+   |                          | DELEGRETURN, GETATTR, GETFH, LINK,     |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, OPEN_CONFIRM, |
+   |                          | OPEN_DOWNGRADE, PUTFH, READ, READDIR,  |
+   |                          | READLINK, REMOVE, RENAME, RESTOREFH,   |
+   |                          | SAVEFH, SECINFO, SETATTR, VERIFY,      |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_NAMETOOLONG      | CREATE, LINK, LOOKUP, OPEN, REMOVE,    |
+   |                          | RENAME, SECINFO                        |
+   |                          |                                        |
+   | NFS4ERR_NOENT            | LINK, LOOKUP, LOOKUPP, OPEN, OPENATTR, |
+   |                          | REMOVE, RENAME, SECINFO                |
+   |                          |                                        |
+   | NFS4ERR_NOFILEHANDLE     | ACCESS, CLOSE, COMMIT, CREATE,         |
+   |                          | DELEGRETURN, GETATTR, GETFH, LINK,     |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, OPEN_CONFIRM, |
+   |                          | OPEN_DOWNGRADE, READ, READDIR,         |
+   |                          | READLINK, REMOVE, RENAME, SAVEFH,      |
+   |                          | SECINFO, SETATTR, VERIFY, WRITE        |
+   |                          |                                        |
+   | NFS4ERR_NOSPC            | CREATE, LINK, OPEN, OPENATTR, RENAME,  |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_NOTDIR           | CREATE, LINK, LOOKUP, LOOKUPP, OPEN,   |
+   |                          | READDIR, REMOVE, RENAME, SECINFO       |
+   |                          |                                        |
+   | NFS4ERR_NOTEMPTY         | REMOVE, RENAME                         |
+   |                          |                                        |
+   | NFS4ERR_NOTSUPP          | DELEGPURGE, DELEGRETURN, LINK, OPEN,   |
+   |                          | OPENATTR, READLINK                     |
+   |                          |                                        |
+   | NFS4ERR_NOT_SAME         | READDIR, VERIFY                        |
+   |                          |                                        |
+   | NFS4ERR_NO_GRACE         | LOCK, OPEN                             |
+   |                          |                                        |
+   | NFS4ERR_NXIO             | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_OLD_STATEID      | CLOSE, DELEGRETURN, LOCK, LOCKU, OPEN, |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE, READ,    |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_OPENMODE         | LOCK, READ, SETATTR, WRITE             |
+   |                          |                                        |
+   | NFS4ERR_OP_ILLEGAL       | CB_ILLEGAL, ILLEGAL                    |
+
+##################################################################################
+
+   |                          |                                        |
+   | NFS4ERR_PERM             | CREATE, OPEN, SETATTR                  |
+   |                          |                                        |
+   | NFS4ERR_RECLAIM_BAD      | LOCK, OPEN                             |
+   |                          |                                        |
+   | NFS4ERR_RECLAIM_CONFLICT | LOCK, OPEN                             |
+   |                          |                                        |
+   | NFS4ERR_RESOURCE         | ACCESS, CLOSE, COMMIT, CREATE,         |
+   |                          | DELEGPURGE, DELEGRETURN, GETATTR,      |
+   |                          | GETFH, LINK, LOCK, LOCKT, LOCKU,       |
+   |                          | LOOKUP, LOOKUPP, OPEN, OPENATTR,       |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE, READ,    |
+   |                          | READDIR, READLINK, RELEASE_LOCKOWNER,  |
+   |                          | REMOVE, RENAME, RENEW, RESTOREFH,      |
+   |                          | SAVEFH, SECINFO, SETATTR, SETCLIENTID, |
+   |                          | SETCLIENTID_CONFIRM, VERIFY, WRITE     |
+   |                          |                                        |
+   | NFS4ERR_RESTOREFH        | RESTOREFH                              |
+   |                          |                                        |
+   | NFS4ERR_ROFS             | COMMIT, CREATE, LINK, OPEN, OPENATTR,  |
+   |                          | OPEN_DOWNGRADE, REMOVE, RENAME,        |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_SAME             | NVERIFY                                |
+   |                          |                                        |
+   | NFS4ERR_SERVERFAULT      | ACCESS, CB_GETATTR, CB_RECALL, CLOSE,  |
+   |                          | COMMIT, CREATE, DELEGPURGE,            |
+   |                          | DELEGRETURN, GETATTR, GETFH, LINK,     |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, OPEN_CONFIRM, |
+   |                          | OPEN_DOWNGRADE, PUTFH, PUTPUBFH,       |
+   |                          | PUTROOTFH, READ, READDIR, READLINK,    |
+   |                          | RELEASE_LOCKOWNER, REMOVE, RENAME,     |
+   |                          | RENEW, RESTOREFH, SAVEFH, SECINFO,     |
+   |                          | SETATTR, SETCLIENTID,                  |
+   |                          | SETCLIENTID_CONFIRM, VERIFY, WRITE     |
+   |                          |                                        |
+   | NFS4ERR_SHARE_DENIED     | OPEN                                   |
+   |                          |                                        |
+   | NFS4ERR_STALE            | ACCESS, CLOSE, COMMIT, CREATE,         |
+   |                          | DELEGRETURN, GETATTR, GETFH, LINK,     |
+   |                          | LOCK, LOCKT, LOCKU, LOOKUP, LOOKUPP,   |
+   |                          | NVERIFY, OPEN, OPENATTR, OPEN_CONFIRM, |
+   |                          | OPEN_DOWNGRADE, PUTFH, READ, READDIR,  |
+   |                          | READLINK, REMOVE, RENAME, RESTOREFH,   |
+   |                          | SAVEFH, SECINFO, SETATTR, VERIFY,      |
+   |                          | WRITE                                  |
+   |                          |                                        |
+
+##################################################################################
+
+   | NFS4ERR_STALE_CLIENTID   | DELEGPURGE, LOCK, LOCKT, OPEN,         |
+   |                          | RELEASE_LOCKOWNER, RENEW,              |
+   |                          | SETCLIENTID_CONFIRM                    |
+   |                          |                                        |
+   | NFS4ERR_STALE_STATEID    | CLOSE, DELEGRETURN, LOCK, LOCKU,       |
+   |                          | OPEN_CONFIRM, OPEN_DOWNGRADE, READ,    |
+   |                          | SETATTR, WRITE                         |
+   |                          |                                        |
+   | NFS4ERR_SYMLINK          | COMMIT, LOOKUP, LOOKUPP, OPEN, READ,   |
+   |                          | WRITE                                  |
+   |                          |                                        |
+   | NFS4ERR_TOOSMALL         | READDIR                                |
+   |                          |                                        |
+   | NFS4ERR_WRONGSEC         | LINK, LOOKUP, LOOKUPP, OPEN, PUTFH,    |
+   |                          | PUTPUBFH, PUTROOTFH, RENAME, RESTOREFH |
+   |                          |                                        |
+   | NFS4ERR_XDEV             | LINK, RENAME                           |
+   |                          |                                        |
+   +--------------------------+----------------------------------------+
+
+##################################################################################
+
+   +-----+--------------+--------+-----------+-----------+-----------+--
+   | tag | minorversion | numops | op + args | op + args | op + args |
+   +-----+--------------+--------+-----------+-----------+-----------+--
+
+   and the reply's structure is:
+
+     +------------+-----+--------+-----------------------+--
+     |last status | tag | numres | status + op + results |
+     +------------+-----+--------+-----------------------+--
+
+##################################################################################
+
+     compoundargs -> compoundres
+
+##################################################################################
+
+     (cfh), accessreq -> supported, accessrights
+
+16.1.2.  ARGUMENT
+
+   const ACCESS4_READ      = 0x00000001;
+   const ACCESS4_LOOKUP    = 0x00000002;
+   const ACCESS4_MODIFY    = 0x00000004;
+   const ACCESS4_EXTEND    = 0x00000008;
+   const ACCESS4_DELETE    = 0x00000010;
+   const ACCESS4_EXECUTE   = 0x00000020;
+
+##################################################################################
+
+     (cfh), seqid, open_stateid -> open_stateid
+
+##################################################################################
+
+     (cfh), offset, count -> verifier
+
+##################################################################################
+
+     (cfh), name, type, attrs -> (cfh), cinfo, attrset
+
+##################################################################################
+
+     clientid ->
+
+##################################################################################
+
+     (cfh), stateid ->
+
+##################################################################################
+
+     (cfh), attrbits -> attrbits, attrvals
+
+##################################################################################
+
+     (cfh) -> filehandle
+
+##################################################################################
+
+     (sfh), (cfh), newname -> (cfh), cinfo
+
+##################################################################################
+
+     (cfh) locktype, reclaim, offset, length, locker -> stateid
+
+16.10.2.  ARGUMENT
+
+   enum nfs_lock_type4 {
+           READ_LT         = 1,
+           WRITE_LT        = 2,
+           READW_LT        = 3,    /* blocking read */
+           WRITEW_LT       = 4     /* blocking write */
+   };
+
+##################################################################################
+
+     (cfh) locktype, offset, length, owner -> {void, NFS4ERR_DENIED ->
+     owner}
+
+##################################################################################
+
+     (cfh) type, seqid, stateid, offset, length -> stateid
+
+##################################################################################
+
+     (cfh), component -> (cfh)
+
+##################################################################################
+
+     (cfh) -> (cfh)
+
+##################################################################################
+
+     (cfh), fattr -> -
+
+##################################################################################
+
+     (cfh), seqid, share_access, share_deny, owner, openhow, claim ->
+     (cfh), stateid, cinfo, rflags, attrset, delegation
+
+16.16.2.  ARGUMENT
+
+   /*
+    * Various definitions for OPEN
+    */
+   enum createmode4 {
+           UNCHECKED4      = 0,
+           GUARDED4        = 1,
+           EXCLUSIVE4      = 2
+   };
+
+##################################################################################
+
+   enum opentype4 {
+           OPEN4_NOCREATE  = 0,
+           OPEN4_CREATE    = 1
+   };
+
+##################################################################################
+
+   /* Next definitions used for OPEN delegation */
+   enum limit_by4 {
+           NFS_LIMIT_SIZE          = 1,
+           NFS_LIMIT_BLOCKS        = 2
+           /* others as needed */
+   };
+
+##################################################################################
+
+   enum open_delegation_type4 {
+           OPEN_DELEGATE_NONE      = 0,
+           OPEN_DELEGATE_READ      = 1,
+           OPEN_DELEGATE_WRITE     = 2
+   };
+
+   enum open_claim_type4 {
+           CLAIM_NULL              = 0,
+           CLAIM_PREVIOUS          = 1,
+           CLAIM_DELEGATE_CUR      = 2,
+           CLAIM_DELEGATE_PREV     = 3
+   };
+
+##################################################################################
+
+   /* Client must confirm open */
+   const OPEN4_RESULT_CONFIRM      = 0x00000002;
+   /* Type of file locking behavior at the server */
+   const OPEN4_RESULT_LOCKTYPE_POSIX = 0x00000004;
+
+##################################################################################
+
+     (cfh) createdir -> (cfh)
+
+##################################################################################
+
+     (cfh), seqid, stateid -> stateid
+
+##################################################################################
+
+     (cfh), stateid, seqid, access, deny -> stateid
+
+##################################################################################
+
+     filehandle -> (cfh)
+
+##################################################################################
+
+     - -> (cfh)
+
+##################################################################################
+
+     (cfh), stateid, offset, count -> eof, data
+
+##################################################################################
+
+     (cfh), cookie, cookieverf, dircount, maxcount, attr_request ->
+     cookieverf { cookie, name, attrs }
+
+##################################################################################
+
+     (cfh) -> linktext
+
+##################################################################################
+
+     (cfh), filename -> change_info
+
+##################################################################################
+
+     (sfh), oldname, (cfh), newname -> source_cinfo, target_cinfo
+
+##################################################################################
+
+     clientid -> ()
+
+##################################################################################
+
+     (sfh) -> (cfh)
+
+##################################################################################
+
+     (cfh) -> (sfh)
+
+##################################################################################
+
+     (cfh), name -> { secinfo }
+
+##################################################################################
+
+   /*
+    * From RFC 2203
+    */
+   enum rpc_gss_svc_t {
+           RPC_GSS_SVC_NONE        = 1,
+           RPC_GSS_SVC_INTEGRITY   = 2,
+           RPC_GSS_SVC_PRIVACY     = 3
+   };
+
+##################################################################################
+
+     (cfh), stateid, attrmask, attr_vals -> attrsset
+
+##################################################################################
+
+   o  The server has previously recorded a confirmed { u, x, c, l, s }
+      record such that v != u, l may or may not equal k, and has not
+      recorded any unconfirmed { *, x, *, *, * } record for x.  The
+      server records an unconfirmed { v, x, d, k, t } (d != c, t != s).
+
+##################################################################################
+
+   o  The server has no confirmed { *, x, *, *, * } for x.  It may or
+      may not have recorded an unconfirmed { u, x, c, l, s }, where l
+      may or may not equal k, and u may or may not equal v.  Any
+      unconfirmed record { u, x, c, l, * }, regardless of whether u == v
+      or l == k, is replaced with an unconfirmed record { v, x, d, k, t
+      } where d != c, t != s.
+
+##################################################################################
+
+     clientid, setclientid_confirm -> -
+
+##################################################################################
+
+     PUTFH (directory filehandle)
+     LOOKUP (filename)
+     VERIFY (filehandle == fh)
+     PUTFH (directory filehandle)
+     REMOVE (filename)
+
+##################################################################################
+
+   enum stable_how4 {
+           UNSTABLE4       = 0,
+           DATA_SYNC4      = 1,
+           FILE_SYNC4      = 2
+   };
+
+##################################################################################
+
+     lock-owner -> ()
+
+##################################################################################
+
+     <null> -> ()
+
+##################################################################################
+
+   enum nfs_cb_opnum4 {
+           OP_CB_GETATTR           = 3,
+           OP_CB_RECALL            = 4,
+           OP_CB_ILLEGAL           = 10044
+   };
+
+##################################################################################
+
+     fh, attr_request -> attrmask, attr_vals
+
+##################################################################################
+
+     stateid, truncate, fh -> ()
+
+##################################################################################

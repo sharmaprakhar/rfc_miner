@@ -1,0 +1,29 @@
+
+      FIELD   BYTES   DESCRIPTION
+      -----   -----   -----------
+
+         op      1       packet op code / message type.
+                         1 = BOOTREQUEST, 2 = BOOTREPLY
+
+         htype   1       hardware address type,
+                         see ARP section in "Assigned Numbers" RFC.
+                         '1' = 10mb ethernet
+
+##################################################################################
+
+      The IP destination address is set to 255.255.255.255.  (the
+      broadcast address) or to the server's IP address (if known).  The
+      IP source address and 'ciaddr' are set to the client's IP address
+      if known, else 0.  The UDP header is set with the proper length;
+      source port = 'BOOTP client' port destination port = 'BOOTP
+      server' port.
+
+##################################################################################
+
+      # comment line
+
+##################################################################################
+
+      # last updated by smith
+
+##################################################################################

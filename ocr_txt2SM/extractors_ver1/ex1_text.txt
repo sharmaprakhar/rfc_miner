@@ -1,0 +1,31 @@
++ ——————————————————————————— +
+|Protocol name length = 4 |
++ ——————————————————————————— +
+I IMI IQI I
++ ——————————————————————————— +
+I ITI ITI I
++ ——————————————————————————— +
+|Proto.level=5|Connect flags|
++ ——————————————————————————— +
+| Keep alive
+
++ ——————————————————————————— +
+
+| CONNECT Properties Length |
+| (Upto 4 bytes) |
+
++ ——————————————————————————— +
+| ( ..0ther properties..) |
++ ——————————————————————————— +
+| Authentication Method |
+| (0x15) | Len. |
+| Len | IaI |
+I ICI I lel I
++ ——————————————————————————— +
+| Authentication Data
+
+| (0x16) | Len |
+| Len | token |
+| |
+
+or token + PoP data

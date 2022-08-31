@@ -1,0 +1,9 @@
+  ---+----+----+----+----+----+----+------+----+----------+--------+-----------+----------+
+     |  1 |    |    |    |    |    |32-bit|    |max 32-bit| Cipher |Compression|Extensions|
+     |0x01|    |    |    |  3 |  1 |random|    |session Id| Suites |  methods  |          |
+  ---+----+----+----+----+----+----+------+----+----------+--------+-----------+----------+
+  /  |  \    \---------\    \----\             \       \
+ /       \        \            \                \   SessionId
+record    \     length        SSL/TLS            \
+length     \                  version         SessionId
+            type: 1       (TLS 1.0 here)       length

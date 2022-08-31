@@ -1,0 +1,193 @@
+
+                             +---------------------+
+                             | Client              |
+                             |                     |
+      +---(A) Token request--| Client -            |
+      |                      | Authorization       |
+      |   +-(B) Access token-> Server Interface    |
+      |   |                  |       (HTTPS)       |
+      |   |                  |_____________________|
+      |   |                  |                     |
+   +--v-------------+        |  Pub/Sub Interface  |
+   |  Authorization |        |     (MQTTS)         |
+   |  Server        |        +-----------^---------+
+   |________________|            |       |
+      |    ^             (C)Connection  (F)Connection
+      |    |               request +    response
+      |    |               access token  |
+      |    |                     |       |
+      |    |                 +---v--------------+
+      |    |                 |   Broker (MQTTS) |
+      |    |                 |__________________|
+      |    +(D)Introspection-|                  |
+      |   request (optional) | RS-AS interface  |
+      |                      |     (HTTPS)      |
+      +-(E)Introspection---->|__________________|
+        response (optional)
+
+                         Figure 1: Connection setup
+
+##################################################################################
+
+          0             8             16
+          +---------------------------+
+          |Protocol name length = 4B  |
+          +---------------------------+
+          |     'M'            'Q'    |
+          +---------------------------+
+          |     'T'            'T'    |
+          +---------------------------+
+          |Proto.level=5|Connect flags|
+          +---------------------------+
+          |        Keep alive         |
+          +---------------------------+
+          | CONNECT Properties Length |
+          |      (Upto  4 bytes)      |
+          +---------------------------+
+          | ( ..Other properties..)   |
+          +---------------------------+
+          |  Authentication Method    |
+          |      (0x15)  |   Len.     |
+          |      Len     |   'a'      |
+          |      'c'     |   'e'      |
+          +---------------------------+
+          |  Authentication Data      |
+          |     (0x16)   |    Len     |
+          |      Len     |   token    |
+          |  or token + PoP data      |
+          +---------------------------+
+
+       Figure 2: MQTT v5 CONNECT Variable Header with Authentication
+
+##################################################################################
+
+   +-----------------------------------------------------------+
+   |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
+   |   Flag  |Flag |           |        |         |Start|      |
+   +-----------------------------------------------------------+
+   | 0       | 0   |    X      |   X X  |   X     |  X  |  0   |
+   +-----------------------------------------------------------+
+
+                      Figure 3: CONNECT flags for AUTH
+
+##################################################################################
+
+   +-----------------------------------------------------------------+
+   |Authentication|Token Length|Token   |MAC or Signature            |
+   |Data Length   |            |        |(over TLS exporter content) |
+   +-----------------------------------------------------------------+
+
+    Figure 4: Authentication Data for PoP based on TLS exporter content
+
+##################################################################################
+
+   +------------------------------------+
+   |Authentication|Token Length|Token   |
+   |Data Length   |            |        |
+   +------------------------------------+
+
+     Figure 5: Authentication Data to Initiate PoP based on Challenge/
+                                  Response
+
+   +------------------------------+
+   |Authentication|Nonce (8 bytes)|
+   |Data Length   |               |
+   +------------------------------+
+
+             Figure 6: Authentication Data for Broker Challenge
+
+##################################################################################
+
+   +------------------------------------------------------------------+
+   |Authentication|Client Nonce   |Client|MAC or Signature            |
+   |Data Length   |Length         |nonce |(over RS nonce+Client nonce)|
+   +------------------------------------------------------------------+
+
+        Figure 7: Authentication Data for Client Challenge Response
+
+##################################################################################
+
+                    Client      Broker
+                     |             |
+                     |<===========>| TLS connection setup
+                     |             |
+                     |             |
+                     +------------>| CONNECT with Authentication Data
+                     |             | contains only token
+                     |             |
+                     <-------------+ AUTH '0x18 (Cont. Authentication)'
+                     |             | 8-byte nonce as RS challenge
+                     |             |
+                     |------------>| AUTH '0x18 (Cont. Authentication)'
+                     |             | 8-byte client nonce + signature/MAC
+                     |             |
+                     |             |---+ Token validation
+                     |             |   | (may involve introspection)
+                     |             |<--+
+                     |             |
+                     |<------------+ CONNACK '0x00 (Success)'
+
+           Figure 8: PoP Challenge/Response Flow - Success
+
+##################################################################################
+
+ AIF-MQTT = AIF-Generic<topic_filter, permissions>
+ AIF-Generic<topic_filter, permissions> = [*[topic_filter, permissions]]
+ topic_filter = tstr
+ permissions = [+permission]
+ permission = "pub"/"sub"
+
+                    Figure 9: AIF-MQTT data model
+
+##################################################################################
+
+ [["topic1", ["pub","sub"]], ["topic2/#",["pub"]], ["+/topic3",["sub"]]]
+
+                       Figure 10: Example scope
+
+##################################################################################
+
+          0             8             16
+          +---------------------------+
+          |Protocol name length = 4B  |
+          +---------------------------+
+          |     'M'            'Q'    |
+          +---------------------------+
+          |     'T'            'T'    |
+          +---------------------------+
+          |Proto.level=5|Connect flags|
+          +---------------------------+
+          |        Keep alive         |
+          +---------------------------+
+          |        Payload            |
+          |  Client Identifier        |
+          |  (UTF-8 encoded string)   |
+          |  Username as access token |
+          |   (UTF-8 endoded string)  |
+          | Password for signature/MAC|
+          |     (Binary Data)         |
+          +---------------------------+
+
+         Figure 11: MQTT CONNECT variable header using username and
+
+##################################################################################
+
+   +-----------------------------------------------------------+
+   |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
+   | flag    |flag |           |        |         |     |      |
+   +-----------------------------------------------------------+
+   | 1       | 1   |    X      |   X X  |   X     |  X   |  0  |
+   +-----------------------------------------------------------+
+
+              Figure 12: MQTT CONNECT flags.  (Rsvd=Reserved)
+
+##################################################################################
+
+                       'U+0061'||'U+0063'||'U+0065'||UTF-8(access token)
+
+                      Figure 13: Username in CONNECT
+
+   To this end, the access token MUST be base64url encoded, omitting the
+   '=' padding characters [RFC4648].
+
+##################################################################################

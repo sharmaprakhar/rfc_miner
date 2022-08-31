@@ -1,0 +1,81 @@
+Abstract
+   The Point-to-Point Protocol (PPP) provides a standard method for
+   transporting multi-protocol datagrams over point-to-point links.  PPP
+   is comprised of three main components:
+      1. A method for encapsulating multi-protocol datagrams.
+      2. A Link Control Protocol (LCP) for establishing, configuring,
+         and testing the data-link connection.
+      3. A family of Network Control Protocols (NCPs) for establishing
+         and configuring different network-layer protocols.
+   This document defines the PPP organization and methodology, and the
+   PPP encapsulation, together with an extensible option negotiation
+   mechanism which is able to negotiate a rich assortment of
+   configuration parameters and provides additional management
+   functions.  The PPP Link Control Protocol (LCP) is described in terms
+   of this mechanism.
+   1.  Introduction
+   The Point-to-Point Protocol is designed for simple links which
+   transport packets between two peers.  These links provide full-duplex
+   simultaneous bi-directional operation, and are assumed to deliver
+   packets in order.  It is intended that PPP provide a common solution
+   for easy connection of a wide variety of hosts, bridges and routers
+   [1].
+   Encapsulation
+      The PPP encapsulation provides for multiplexing of different
+      network-layer protocols simultaneously over the same link.  The
+      PPP encapsulation has been carefully designed to retain
+      compatibility with most commonly used supporting hardware.
+      Only 8 additional octets are necessary to form the encapsulation
+      when used within the default HDLC-like framing.  In environments
+      where bandwidth is at a premium, the encapsulation and framing may
+      be shortened to 2 or 4 octets.
+      To support high speed implementations, the default encapsulation
+      uses only simple fields, only one of which needs to be examined
+      for demultiplexing.  The default header and information fields
+      fall on 32-bit boundaries, and the trailer may be padded to an
+      arbitrary boundary.
+   Configuration
+      It is intended that PPP links be easy to configure.  By design,
+      the standard defaults handle all common configurations.  The
+      implementor can specify improvements to the default configuration,
+      which are automatically communicated to the peer without operator
+      intervention.  Finally, the operator may explicitly configure
+      options for the link which enable the link to operate in
+      environments where it would otherwise be impossible.
+      This self-configuration is implemented through an extensible
+      option negotiation mechanism, wherein each end of the link
+      describes to the other its capabilities and requirements.
+      Although the option negotiation mechanism described in this
+      document is specified in terms of the Link Control Protocol (LCP),
+      the same facilities are designed to be used by other control
+      protocols, especially the family of NCPs.      
+   Information Field
+      The Information field is zero or more octets.  The Information
+      field contains the datagram for the protocol specified in the
+      Protocol field.
+      The maximum length for the Information field, including Padding,
+      but not including the Protocol field, is termed the Maximum
+      Receive Unit (MRU), which defaults to 1500 octets.  By
+      negotiation, consenting PPP implementations may use other values
+      for the MRU.
+3.5.  Authentication Phase
+   On some links it may be desirable to require a peer to authenticate
+   itself before allowing network-layer protocol packets to be
+   exchanged.
+   By default, authentication is not mandatory.  If an implementation
+   desires that the peer authenticate with some specific authentication
+   protocol, then it MUST request the use of that authentication
+   protocol during Link Establishment phase.
+   Authentication SHOULD take place as soon as possible after link
+   establishment.  However, link quality determination MAY occur
+   concurrently.  An implementation MUST NOT allow the exchange of link
+   quality determination packets to delay authentication indefinitely.
+   Advancement from the Authentication phase to the Network-Layer
+   Protocol phase MUST NOT occur until authentication has completed.  If
+   authentication fails, the authenticator SHOULD proceed instead to the
+   Link Termination phase.
+   Only Link Control Protocol, authentication protocol, and link quality
+   monitoring packets are allowed during this phase.  All other packets
+   received during this phase MUST be silently discarded.     
+   The receipt of the LCP Configure-Request causes a return to the Link
+   Establishment phase from the Network-Layer Protocol phase or   

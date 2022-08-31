@@ -1,0 +1,1726 @@
+Abstract
+
+   This document specifies a profile for the ACE (Authentication and
+   Authorization for Constrained Environments) framework to enable
+   authorization in a Message Queuing Telemetry Transport (MQTT)-based
+   publish-subscribe messaging system.  Proof-of-possession keys, bound
+   to OAuth2.0 access tokens, are used to authenticate and authorize
+   MQTT Clients.  The protocol relies on TLS for confidentiality and
+   MQTT server (broker) authentication.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 26 April 2022.
+
+Copyright Notice
+
+   Copyright (c) 2021 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+
+1.  Introduction
+
+   This document specifies a profile for the ACE framework
+   [I-D.ietf-ace-oauth-authz].  In this profile, Clients and Servers
+   (Brokers) use MQTT to exchange Application Messages.  The protocol
+   relies on TLS for communication security between entities.  The MQTT
+   protocol interactions are described based on the MQTT v5.0 - the
+   OASIS Standard [MQTT-OASIS-Standard-v5].  Since it is expected that
+   MQTT deployments will continue to support MQTT v3.1.1 clients, this
+   document also describes a reduced set of protocol interactions for
+   MQTT v3.1.1 - the OASIS Standard [MQTT-OASIS-Standard].  However,
+   MQTT v5.0 is the RECOMMENDED version as it works more naturally with
+   ACE-style authentication and authorization.
+
+   MQTT is a publish-subscribe protocol, and after connecting to the
+   MQTT Server (Broker), a Client can publish and subscribe to multiple
+   topics.  The Broker, which acts as the Resource Server (RS), is
+   responsible for distributing messages published by the publishers to
+   their subscribers.  In the rest of the document, the terms "RS",
+   "MQTT Server" and "Broker" are used interchangeably.
+
+   Messages are published under a Topic Name, and subscribers subscribe
+   to the Topic Names to receive the corresponding messages.  The Broker
+   uses the Topic Name in a published message to determine which
+   subscribers to relay the messages to.  In this document, topics, more
+   specifically, Topic Names, are treated as resources.  The Clients are
+   assumed to have identified the publish/subscribe topics of interest
+   out-of-band (topic discovery is not a feature of the MQTT protocol).
+   A Resource Owner can pre-configure policies at the Authorization
+   Server (AS) that give Clients publish or subscribe permissions to
+   different topics.
+
+   Clients prove their permission to publish and subscribe to topics
+   hosted on an MQTT broker using an access token, bound to a proof-of-
+   possession (PoP) key.  This document describes how to authorize the
+   following exchanges between the Clients and the Broker.
+
+   *  Connection requests from the Clients to the Broker
+
+   *  Publish requests from the Clients to the Broker and from the
+      Broker to the Clients
+
+2.2.  Client Connection Request to the Broker (C)
+
+2.2.1.  Overview of Client-RS Authentication Methods over TLS and MQTT
+
+   Unless the Client publishes and subscribes to only public topics, the
+   Client and the Broker MUST perform mutual authentication.  The Client
+   MUST authenticate to the Broker either over MQTT or TLS before
+   performing any other action.  For MQTT, the options are "None" and
+   "ace".  For TLS, the options are "Anon" for an anonymous client, and
+   "Known(RPK/PSK)" for Raw Public Keys (RPK) [RFC7250] and Pre-Shared
+   Keys (PSK), respectively.  The "None" and "Anon" options do not
+   provide client authentication but can be used either during
+   authentication or in combination with authentication at the other
+   layer.  When the Client uses TLS:Anon,MQTT:None, the Client can only
+   publish or subscribe to public topics.  Thus, the client
+   authentication procedures involve the following possible
+   combinations:
+
+Sengul & Kirby            Expires 26 April 2022                [Page 13]
+
+Internet-Draft           MQTT-TLS profile of ACE            October 2021
+
+
+   In PreSharedKey mode, the knowledge of the shared secret by the
+   Client and the Broker is used for mutual authentication between both
+   peers.
+
+2.2.4.  Client Authentication over MQTT
+
+2.2.4.1.  Transporting the Access Token Inside the MQTT CONNECT
+
+   This section describes how the Client transports the token to the
+   Broker inside the CONNECT packet.  If this method is used, the Client
+   TLS connection is expected to be anonymous, and the Broker is
+   authenticated during the TLS connection setup.  The approach
+   described in this section is similar to an earlier proposal by
+   Fremantle et al [fremantle14].
+
+   After sending the CONNECT, the client MUST wait to receive the
+   CONNACK from the Broker.  The only packets it is allowed to send are
+   DISCONNECT or AUTH that is in response to the Broker AUTH.
+   Similarly, except for a DISCONNECT and AUTH response from the Client,
+   the Broker MUST NOT process any packets before sending a CONNACK.
+
+   Figure 2 shows the structure of the MQTT CONNECT packet used in MQTT
+   v5.0.  A CONNECT packet is composed of a fixed header, a variable
+   header and a payload.  The fixed header contains the Control Packet
+   Type (CPT), Reserved, and Remaining Length fields.  Remaining Length
+   is a Variable Byte Integer that represents the number of bytes
+   remaining within the current Control Packet, including data in the
+   Variable Header and the Payload.  The Variable Header contains the
+   Protocol Name, Protocol Level, Connect Flags, Keep Alive, and
+   Properties fields.  The Connect Flags in the variable header specify
+   the properties of the MQTT session.  It also indicates the presence
+   or absence of some fields in the Payload.  The payload contains one
+   or more encoded fields, namely a unique Client Identifier for the
+   Client, a Will Topic, Will Payload, User Name and Password.  All but
+   the Client Identifier can be omitted depending on the flags in the
+   Variable Header.  The Client Identifier identifies the Client to the
+   Broker, and therefore, is unique for each Client.  It must be noted
+   that the Client Identifier is an unauthenticated identifier used
+   within the MQTT protocol and so is not bound to the access token.
+
+2.  Command meanings.
+
+   IAC WILL LOGOUT
+
+      The sender of this command REQUESTS permission to, or confirms
+      that it will, forcibly log off the user process at its end.
+
+   IAC WON'T LOGOUT
+
+      The sender of this command REFUSES to forcibly log off the user
+      process at its end.
+
+   IAC DO LOGOUT
+
+      The sender of this command REQUESTS that the receiver forcibly log
+      off the user process at the receiver's end, or confirms that the
+      receiver has its permission to do so.
+
+   IAC DON'T LOGOUT
+
+      The sender of this command DEMANDS that the receiver not forcibly
+      log off the user process at the receiver's end.
+
+3.  Default.
+
+   WON'T LOGOUT
+
+   DON'T LOGOUT
+
+   i.e., no forcible logging off of the server's user process.
+
+4.  Motivation for the option.
+
+   Often, a runaway user process could be hung in such a state that it
+   cannot be interrupted by normal means.  Conversely, the system itself
+   could be bottlenecked so that response delays are intolerable.  A
+   user (human or otherwise) eventually will time out out of frustration
+
+Sengul & Kirby            Expires 26 April 2022                [Page 15]
+Internet-Draft           MQTT-TLS profile of ACE            October 2021
+
+Table of Contents
+
+   1   Introduction ...................................................7
+   1.1    Purpose......................................................7
+   1.2   Requirements .................................................8
+   1.3   Terminology ..................................................8
+   1.4   Overall Operation ...........................................12
+   2   Notational Conventions and Generic Grammar ....................14
+   2.1   Augmented BNF ...............................................14
+   2.2   Basic Rules .................................................15
+   3   Protocol Parameters ...........................................17
+   3.1   HTTP Version ................................................17
+   3.2   Uniform Resource Identifiers ................................18
+   3.2.1    General Syntax ...........................................19
+   3.2.2    http URL .................................................19
+   3.2.3    URI Comparison ...........................................20
+   3.3   Date/Time Formats ...........................................20
+   3.3.1    Full Date ................................................20
+   3.3.2    Delta Seconds ............................................21
+   3.4   Character Sets ..............................................21
+   3.4.1    Missing Charset ..........................................22
+   3.5   Content Codings .............................................23
+   3.6   Transfer Codings ............................................24
+   3.6.1    Chunked Transfer Coding ..................................25
+   3.7   Media Types .................................................26
+   3.7.1    Canonicalization and Text Defaults .......................27
+   3.7.2    Multipart Types ..........................................27
+   3.8   Product Tokens ..............................................28
+   3.9   Quality Values ..............................................29
+   3.10  Language Tags ...............................................29
+   3.11  Entity Tags .................................................30
+   3.12  Range Units .................................................30
+   4   HTTP Message ..................................................31
+   4.1   Message Types ...............................................31
+   4.2   Message Headers .............................................31
+   4.3   Message Body ................................................32
+   4.4   Message Length ..............................................33
+   4.5   General Header Fields .......................................34
+   5   Request .......................................................35
+   5.1   Request-Line ................................................35
+   5.1.1    Method ...................................................36
+   5.1.2    Request-URI ..............................................36
+   5.2   The Resource Identified by a Request ........................38
+   5.3   Request Header Fields .......................................38
+   6   Response ......................................................39
+   6.1   Status-Line .................................................39
+   6.1.1    Status Code and Reason Phrase ............................39
+   6.2   Response Header Fields ......................................41
+
+
+
+Fielding, et al.            Standards Track                     [Page 2]
+RFC 2616                        HTTP/1.1                       June 1999
+
+
+   7   Entity ........................................................42
+   7.1   Entity Header Fields ........................................42
+   7.2   Entity Body .................................................43
+   7.2.1    Type .....................................................43
+   7.2.2    Entity Length ............................................43
+   8   Connections ...................................................44
+   8.1   Persistent Connections ......................................44
+   8.1.1    Purpose ..................................................44
+   8.1.2    Overall Operation ........................................45
+   8.1.3    Proxy Servers ............................................46
+   8.1.4    Practical Considerations .................................46
+   8.2   Message Transmission Requirements ...........................47
+   8.2.1    Persistent Connections and Flow Control ..................47
+   8.2.2    Monitoring Connections for Error Status Messages .........48
+   8.2.3    Use of the 100 (Continue) Status .........................48
+   8.2.4    Client Behavior if Server Prematurely Closes Connection ..50
+   9   Method Definitions ............................................51
+   9.1   Safe and Idempotent Methods .................................51
+   9.1.1    Safe Methods .............................................51
+   9.1.2    Idempotent Methods .......................................51
+   9.2   OPTIONS .....................................................52
+   9.3   GET .........................................................53
+   9.4   HEAD ........................................................54
+   9.5   POST ........................................................54
+   9.6   PUT .........................................................55
+   9.7   DELETE ......................................................56
+   9.8   TRACE .......................................................56
+   9.9   CONNECT .....................................................57
+   10   Status Code Definitions ......................................57
+   10.1  Informational 1xx ...........................................57
+   10.1.1   100 Continue .............................................58
+   10.1.2   101 Switching Protocols ..................................58
+   10.2  Successful 2xx ..............................................58
+   10.2.1   200 OK ...................................................58
+   10.2.2   201 Created ..............................................59
+   10.2.3   202 Accepted .............................................59
+   10.2.4   203 Non-Authoritative Information ........................59
+   10.2.5   204 No Content ...........................................60
+   10.2.6   205 Reset Content ........................................60
+   10.2.7   206 Partial Content ......................................60
+   10.3  Redirection 3xx .............................................61
+   10.3.1   300 Multiple Choices .....................................61
+   10.3.2   301 Moved Permanently ....................................62
+   10.3.3   302 Found ................................................62
+   10.3.4   303 See Other ............................................63
+   10.3.5   304 Not Modified .........................................63
+   10.3.6   305 Use Proxy ............................................64
+   10.3.7   306 (Unused) .............................................64
+
+
+
+Fielding, et al.            Standards Track                     [Page 3]
+RFC 2616                        HTTP/1.1                       June 1999
+
+
+   10.3.8   307 Temporary Redirect ...................................65
+   10.4  Client Error 4xx ............................................65
+   10.4.1    400 Bad Request .........................................65
+   10.4.2    401 Unauthorized ........................................66
+   10.4.3    402 Payment Required ....................................66
+   10.4.4    403 Forbidden ...........................................66
+   10.4.5    404 Not Found ...........................................66
+   10.4.6    405 Method Not Allowed ..................................66
+   10.4.7    406 Not Acceptable ......................................67
+   10.4.8    407 Proxy Authentication Required .......................67
+   10.4.9    408 Request Timeout .....................................67
+   10.4.10   409 Conflict ............................................67
+   10.4.11   410 Gone ................................................68
+   10.4.12   411 Length Required .....................................68
+   10.4.13   412 Precondition Failed .................................68
+   10.4.14   413 Request Entity Too Large ............................69
+   10.4.15   414 Request-URI Too Long ................................69
+   10.4.16   415 Unsupported Media Type ..............................69
+   10.4.17   416 Requested Range Not Satisfiable .....................69
+   10.4.18   417 Expectation Failed ..................................70
+   10.5  Server Error 5xx ............................................70
+   10.5.1   500 Internal Server Error ................................70
+   10.5.2   501 Not Implemented ......................................70
+   10.5.3   502 Bad Gateway ..........................................70
+   10.5.4   503 Service Unavailable ..................................70
+   10.5.5   504 Gateway Timeout ......................................71
+   10.5.6   505 HTTP Version Not Supported ...........................71
+   11   Access Authentication ........................................71
+   12   Content Negotiation ..........................................71
+   12.1  Server-driven Negotiation ...................................72
+   12.2  Agent-driven Negotiation ....................................73
+   12.3  Transparent Negotiation .....................................74
+   13   Caching in HTTP ..............................................74
+   13.1.1   Cache Correctness ........................................75
+   13.1.2   Warnings .................................................76
+   13.1.3   Cache-control Mechanisms .................................77
+   13.1.4   Explicit User Agent Warnings .............................78
+   13.1.5   Exceptions to the Rules and Warnings .....................78
+   13.1.6   Client-controlled Behavior ...............................79
+   13.2  Expiration Model ............................................79
+   13.2.1   Server-Specified Expiration ..............................79
+   13.2.2   Heuristic Expiration .....................................80
+   13.2.3   Age Calculations .........................................80
+   13.2.4   Expiration Calculations ..................................83
+   13.2.5   Disambiguating Expiration Values .........................84
+   13.2.6   Disambiguating Multiple Responses ........................84
+   13.3  Validation Model ............................................85
+   13.3.1   Last-Modified Dates ......................................86
+
+
+
+Fielding, et al.            Standards Track                     [Page 4]
+RFC 2616                        HTTP/1.1                       June 1999
+
+
+   13.3.2   Entity Tag Cache Validators ..............................86
+   13.3.3   Weak and Strong Validators ...............................86
+   13.3.4   Rules for When to Use Entity Tags and Last-Modified Dates.89
+   13.3.5   Non-validating Conditionals ..............................90
+   13.4  Response Cacheability .......................................91
+   13.5  Constructing Responses From Caches ..........................92
+   13.5.1   End-to-end and Hop-by-hop Headers ........................92
+   13.5.2   Non-modifiable Headers ...................................92
+   13.5.3   Combining Headers ........................................94
+   13.5.4   Combining Byte Ranges ....................................95
+   13.6  Caching Negotiated Responses ................................95
+   13.7  Shared and Non-Shared Caches ................................96
+   13.8  Errors or Incomplete Response Cache Behavior ................97
+   13.9  Side Effects of GET and HEAD ................................97
+   13.10   Invalidation After Updates or Deletions ...................97
+   13.11   Write-Through Mandatory ...................................98
+   13.12   Cache Replacement .........................................99
+   13.13   History Lists .............................................99
+   14   Header Field Definitions ....................................100
+   14.1  Accept .....................................................100
+   14.2  Accept-Charset .............................................102
+   14.3  Accept-Encoding ............................................102
+   14.4  Accept-Language ............................................104
+   14.5  Accept-Ranges ..............................................105
+   14.6  Age ........................................................106
+   14.7  Allow ......................................................106
+   14.8  Authorization ..............................................107
+   14.9  Cache-Control ..............................................108
+   14.9.1   What is Cacheable .......................................109
+   14.9.2   What May be Stored by Caches ............................110
+   14.9.3   Modifications of the Basic Expiration Mechanism .........111
+   14.9.4   Cache Revalidation and Reload Controls ..................113
+   14.9.5   No-Transform Directive ..................................115
+   14.9.6   Cache Control Extensions ................................116
+   14.10   Connection ...............................................117
+   14.11   Content-Encoding .........................................118
+   14.12   Content-Language .........................................118
+   14.13   Content-Length ...........................................119
+   14.14   Content-Location .........................................120
+   14.15   Content-MD5 ..............................................121
+   14.16   Content-Range ............................................122
+   14.17   Content-Type .............................................124
+   14.18   Date .....................................................124
+   14.18.1   Clockless Origin Server Operation ......................125
+   14.19   ETag .....................................................126
+   14.20   Expect ...................................................126
+   14.21   Expires ..................................................127
+   14.22   From .....................................................128
+
+1.4 Overall Operation
+
+   The HTTP protocol is a request/response protocol. A client sends a
+   request to the server in the form of a request method, URI, and
+   protocol version, followed by a MIME-like message containing request
+   modifiers, client information, and possible body content over a
+   connection with a server. The server responds with a status line,
+   including the message's protocol version and a success or error code,
+   followed by a MIME-like message containing server information, entity
+   metainformation, and possible entity-body content. The relationship
+   between HTTP and MIME is described in appendix 19.4.
+
+   Most HTTP communication is initiated by a user agent and consists of
+   a request to be applied to a resource on some origin server. In the
+   simplest case, this may be accomplished via a single connection (v)
+   between the user agent (UA) and the origin server (O).
+
+Table of Contents
+
+   1. Introduction ....................................................3
+      1.1. Specific Extensions Covered ................................3
+      1.2. Conventions Used in This Document ..........................5
+   2. Extensions to the Handshake Protocol ............................5
+   3. Server Name Indication ..........................................6
+   4. Maximum Fragment Length Negotiation .............................8
+   5. Client Certificate URLs .........................................9
+   6. Trusted CA Indication ..........................................12
+   7. Truncated HMAC .................................................13
+   8. Certificate Status Request .....................................14
+   9. Error Alerts ...................................................16
+   10. IANA Considerations ...........................................17
+      10.1. pkipath MIME Type Registration ...........................17
+      10.2. Reference for TLS Alerts, TLS HandshakeTypes, and
+            ExtensionTypes ...........................................19
+   11. Security Considerations .......................................19
+      11.1. Security Considerations for server_name ..................19
+      11.2. Security Considerations for max_fragment_length ..........20
+      11.3. Security Considerations for client_certificate_url .......20
+      11.4. Security Considerations for trusted_ca_keys ..............21
+      11.5. Security Considerations for truncated_hmac ...............21
+      11.6. Security Considerations for status_request ...............22
+   12. Normative References ..........................................22
+   13. Informative References ........................................23
+   Appendix A. Changes from RFC 4366 .................................24
+   Appendix B. Acknowledgements ......................................25
+
+Abstract
+
+   Software-Defined Networking (SDN) refers to a new approach for
+   network programmability, that is, the capacity to initialize,
+   control, change, and manage network behavior dynamically via open
+   interfaces.  SDN emphasizes the role of software in running networks
+   through the introduction of an abstraction for the data forwarding
+   plane and, by doing so, separates it from the control plane.  This
+   separation allows faster innovation cycles at both planes as
+   experience has already shown.  However, there is increasing confusion
+   as to what exactly SDN is, what the layer structure is in an SDN
+   architecture, and how layers interface with each other.  This
+   document, a product of the IRTF Software-Defined Networking Research
+   Group (SDNRG), addresses these questions and provides a concise
+   reference for the SDN research community based on relevant peer-
+   reviewed literature, the RFC series, and relevant documents by other
+   standards organizations.
+
+Status of This Memo
+
+   This document is not an Internet Standards Track specification; it is
+   published for informational purposes.
+
+   This document is a product of the Internet Research Task Force
+   (IRTF).  The IRTF publishes the results of Internet-related research
+   and development activities.  These results might not be suitable for
+   deployment.  This RFC represents the consensus of the Software-
+   Defined Networking Research Group of the Internet Research Task Force
+   (IRTF).  Documents approved for publication by the IRSG are not a
+   candidate for any level of Internet Standard; see Section 2 of RFC
+   5741.
+
+   Information about the current status of this document, any errata,
+   and how to provide feedback on it may be obtained at
+   http://www.rfc-editor.org/info/rfc7426.
+
+Copyright Notice
+
+   Copyright (c) 2015 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents
+   (http://trustee.ietf.org/license-info) in effect on the date of
+   publication of this document.  Please review these documents
+   carefully, as they describe your rights and restrictions with respect
+   to this document.
+
+RFC 7426        SDN: Layers and Architecture Terminology    January 2015
+
+
+   o  Network Device - A device that performs one or more network
+      operations related to packet manipulation and forwarding.  This
+      reference model makes no distinction whether a network device is
+      physical or virtual.  A device can also be considered as a
+      container for resources and can be a resource in itself.
+
+   o  Interface - A point of interaction between two entities.  When the
+      entities are placed at different locations, the interface is
+      usually implemented through a network protocol.  If the entities
+      are collocated in the same physical location, the interface can be
+      implemented using a software application programming interface
+      (API), inter-process communication (IPC), or a network protocol.
+
+   o  Application (App) - An application in the context of SDN is a
+      piece of software that utilizes underlying services to perform a
+      function.  Application operation can be parameterized, for
+      example, by passing certain arguments at call time, but it is
+      meant to be a standalone piece of software; an App does not offer
+      any interfaces to other applications or services.
+
+Lock:  The term "lock" is used to refer to record (byte-range) locks
+      as well as share reservations unless specifically stated
+      otherwise.
+
+   Lock-Owner:  Each byte-range lock is associated with a specific
+      lock-owner and an open-owner.  The lock-owner consists of a
+      client ID and an opaque owner string.  The client presents this to
+      the server to establish the ownership of the byte-range lock as
+      needed.
+
+   Open-Owner:  Each open file is associated with a specific open-owner,
+      which consists of a client ID and an opaque owner string.  The
+      client presents this to the server to establish the ownership of
+      the open as needed.
+
+   READ Bypass Stateid:  The READ Bypass Stateid is a special locking
+      object and is defined in Section 9.1.4.3.
+
+   Server:  The "server" is the entity responsible for coordinating
+      client access to a set of file systems.
+
+   Stable Storage:  NFSv4 servers must be able to recover without data
+      loss from multiple power failures (including cascading power
+      failures, that is, several power failures in quick succession),
+      operating system failures, and hardware failure of components
+      other than the storage medium itself (for example, disk,
+      non-volatile RAM).
+
+      Some examples of stable storage that are allowable for an NFS
+      server include:
+
+      (1)  Media commit of data.  That is, the modified data has been
+           successfully written to the disk media -- for example, the
+           disk platter.
+
+      (2)  An immediate reply disk drive with battery-backed on-drive
+           intermediate storage or uninterruptible power system (UPS).
+
+      (3)  Server commit of data with battery-backed intermediate
+           storage and recovery software.
+
+      (4)  Cache commit with UPS and recovery software.
+
+Status of this memo
+
+   This RFC specifies an Internet standards track protocol for the
+   Internet community, and requests discussion and suggestions for
+   improvements.  Please refer to the current edition of the "Internet
+   Official Protocol Standards" for the standardization state and status
+   of this protocol.  Distribution of this memo is unlimited.
+
+Abstract
+
+   The Dynamic Host Configuration Protocol (DHCP) provides a framework
+   for passing configuration information to hosts on a TCP/IP network.
+   DHCP is based on the Bootstrap Protocol (BOOTP) [7], adding the
+   capability of automatic allocation of reusable network addresses and
+   additional configuration options [19].  DHCP captures the behavior of
+   BOOTP relay agents [7, 23], and DHCP participants can interoperate
+   with BOOTP participants [9].  Due to some errors introduced into RFC
+   1531 in the editorial process, this memo is reissued as RFC 1541.
+
+   Type-5 AS External LSAs with the obvious exception of the link-state
+   type (see section 3.2 for more details). There are two major semantic
+   differences between type-5 and type-7 LSAs.
+
+          o  Type-7 LSAs may be originated by and advertised
+             throughout an NSSA; as with stub areas, NSSA's do not
+             receive or originate type-5 LSAs.
+
+          o  Type-7 LSAs are advertised only within a single NSSA;
+             they are not flooded into the backbone area or any
+             other area by border routers, though the information
+             which they contain can be propagated into the backbone
+             area (see section 3.6).
+
+   In order to allow limited exchange of external information across an
+   NSSA area border, NSSA border routers will translate selected type-7
+   LSAs received from the NSSA into type-5 LSAs.  These type-5 LSAs will
+   be flooded to all type-5 capable areas.  NSSA area border routers may
+   be configured with address ranges so that several type-7 LSAs may be
+   represented by a single type-5 LSA.
+
+Table of Contents
+
+   1.  Introduction . . . . . . . . . . . . . . . . . . . . . . . . .  5
+     1.1.  Transport of Electronic Mail . . . . . . . . . . . . . . .  5
+     1.2.  History and Context for This Document  . . . . . . . . . .  5
+     1.3.  Document Conventions . . . . . . . . . . . . . . . . . . .  6
+   2.  The SMTP Model . . . . . . . . . . . . . . . . . . . . . . . .  7
+     2.1.  Basic Structure  . . . . . . . . . . . . . . . . . . . . .  7
+     2.2.  The Extension Model  . . . . . . . . . . . . . . . . . . .  9
+       2.2.1.  Background . . . . . . . . . . . . . . . . . . . . . .  9
+       2.2.2.  Definition and Registration of Extensions  . . . . . . 10
+       2.2.3.  Special Issues with Extensions . . . . . . . . . . . . 11
+     2.3.  SMTP Terminology . . . . . . . . . . . . . . . . . . . . . 11
+       2.3.1.  Mail Objects . . . . . . . . . . . . . . . . . . . . . 11
+       2.3.2.  Senders and Receivers  . . . . . . . . . . . . . . . . 12
+       2.3.3.  Mail Agents and Message Stores . . . . . . . . . . . . 12
+       2.3.4.  Host . . . . . . . . . . . . . . . . . . . . . . . . . 13
+       2.3.5.  Domain Names . . . . . . . . . . . . . . . . . . . . . 13
+       2.3.6.  Buffer and State Table . . . . . . . . . . . . . . . . 14
+       2.3.7.  Commands and Replies . . . . . . . . . . . . . . . . . 14
+       2.3.8.  Lines  . . . . . . . . . . . . . . . . . . . . . . . . 14
+       2.3.9.  Message Content and Mail Data  . . . . . . . . . . . . 15
+       2.3.10. Originator, Delivery, Relay, and Gateway Systems . . . 15
+       2.3.11. Mailbox and Address  . . . . . . . . . . . . . . . . . 15
+     2.4.  General Syntax Principles and Transaction Model  . . . . . 16
+   3.  The SMTP Procedures: An Overview . . . . . . . . . . . . . . . 17
+     3.1.  Session Initiation . . . . . . . . . . . . . . . . . . . . 18
+     3.2.  Client Initiation  . . . . . . . . . . . . . . . . . . . . 18
+     3.3.  Mail Transactions  . . . . . . . . . . . . . . . . . . . . 19
+     3.4.  Forwarding for Address Correction or Updating  . . . . . . 21
+     3.5.  Commands for Debugging Addresses . . . . . . . . . . . . . 22
+       3.5.1.  Overview . . . . . . . . . . . . . . . . . . . . . . . 22
+       3.5.2.  VRFY Normal Response . . . . . . . . . . . . . . . . . 24
+       3.5.3.  Meaning of VRFY or EXPN Success Response . . . . . . . 25
+       3.5.4.  Semantics and Applications of EXPN . . . . . . . . . . 26
+     3.6.  Relaying and Mail Routing  . . . . . . . . . . . . . . . . 26
+       3.6.1.  Source Routes and Relaying . . . . . . . . . . . . . . 26
+       3.6.2.  Mail eXchange Records and Relaying . . . . . . . . . . 26
+       3.6.3.  Message Submission Servers as Relays . . . . . . . . . 27
+     3.7.  Mail Gatewaying  . . . . . . . . . . . . . . . . . . . . . 28
+       3.7.1.  Header Fields in Gatewaying  . . . . . . . . . . . . . 28
+       3.7.2.  Received Lines in Gatewaying . . . . . . . . . . . . . 29
+       3.7.3.  Addresses in Gatewaying  . . . . . . . . . . . . . . . 29
+       3.7.4.  Other Header Fields in Gatewaying  . . . . . . . . . . 29
+       3.7.5.  Envelopes in Gatewaying  . . . . . . . . . . . . . . . 30
+     3.8.  Terminating Sessions and Connections . . . . . . . . . . . 30
+     3.9.  Mailing Lists and Aliases  . . . . . . . . . . . . . . . . 31
+       3.9.1.  Alias  . . . . . . . . . . . . . . . . . . . . . . . . 31
+
+
+
+Klensin                     Standards Track                     [Page 2]
+RFC 5321                          SMTP                      October 2008
+
+
+       3.9.2.  List . . . . . . . . . . . . . . . . . . . . . . . . . 31
+   4.  The SMTP Specifications  . . . . . . . . . . . . . . . . . . . 32
+     4.1.  SMTP Commands  . . . . . . . . . . . . . . . . . . . . . . 32
+       4.1.1.  Command Semantics and Syntax . . . . . . . . . . . . . 32
+       4.1.2.  Command Argument Syntax  . . . . . . . . . . . . . . . 41
+       4.1.3.  Address Literals . . . . . . . . . . . . . . . . . . . 43
+       4.1.4.  Order of Commands  . . . . . . . . . . . . . . . . . . 44
+       4.1.5.  Private-Use Commands . . . . . . . . . . . . . . . . . 46
+     4.2.  SMTP Replies . . . . . . . . . . . . . . . . . . . . . . . 46
+       4.2.1.  Reply Code Severities and Theory . . . . . . . . . . . 48
+       4.2.2.  Reply Codes by Function Groups . . . . . . . . . . . . 50
+       4.2.3.  Reply Codes in Numeric Order . . . . . . . . . . . . . 52
+       4.2.4.  Reply Code 502 . . . . . . . . . . . . . . . . . . . . 53
+       4.2.5.  Reply Codes after DATA and the Subsequent
+               <CRLF>.<CRLF>  . . . . . . . . . . . . . . . . . . . . 53
+     4.3.  Sequencing of Commands and Replies . . . . . . . . . . . . 54
+       4.3.1.  Sequencing Overview  . . . . . . . . . . . . . . . . . 54
+       4.3.2.  Command-Reply Sequences  . . . . . . . . . . . . . . . 55
+     4.4.  Trace Information  . . . . . . . . . . . . . . . . . . . . 57
+     4.5.  Additional Implementation Issues . . . . . . . . . . . . . 61
+       4.5.1.  Minimum Implementation . . . . . . . . . . . . . . . . 61
+       4.5.2.  Transparency . . . . . . . . . . . . . . . . . . . . . 62
+       4.5.3.  Sizes and Timeouts . . . . . . . . . . . . . . . . . . 62
+         4.5.3.1.  Size Limits and Minimums . . . . . . . . . . . . . 62
+           4.5.3.1.1.  Local-part . . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.2.  Domain . . . . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.3.  Path . . . . . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.4.  Command Line . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.5.  Reply Line . . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.6.  Text Line  . . . . . . . . . . . . . . . . . . 63
+           4.5.3.1.7.  Message Content  . . . . . . . . . . . . . . . 63
+           4.5.3.1.8.  Recipients Buffer  . . . . . . . . . . . . . . 64
+           4.5.3.1.9.  Treatment When Limits Exceeded . . . . . . . . 64
+           4.5.3.1.10. Too Many Recipients Code . . . . . . . . . . . 64
+         4.5.3.2.  Timeouts . . . . . . . . . . . . . . . . . . . . . 65
+           4.5.3.2.1.  Initial 220 Message: 5 Minutes . . . . . . . . 65
+           4.5.3.2.2.  MAIL Command: 5 Minutes  . . . . . . . . . . . 65
+           4.5.3.2.3.  RCPT Command: 5 Minutes  . . . . . . . . . . . 65
+           4.5.3.2.4.  DATA Initiation: 2 Minutes . . . . . . . . . . 66
+           4.5.3.2.5.  Data Block: 3 Minutes  . . . . . . . . . . . . 66
+           4.5.3.2.6.  DATA Termination: 10 Minutes.  . . . . . . . . 66
+           4.5.3.2.7.  Server Timeout: 5 Minutes. . . . . . . . . . . 66
+       4.5.4.  Retry Strategies . . . . . . . . . . . . . . . . . . . 66
+       4.5.5.  Messages with a Null Reverse-Path  . . . . . . . . . . 68
+   5.  Address Resolution and Mail Handling . . . . . . . . . . . . . 69
+     5.1.  Locating the Target Host . . . . . . . . . . . . . . . . . 69
+     5.2.  IPv6 and MX Records  . . . . . . . . . . . . . . . . . . . 71
+   6.  Problem Detection and Handling . . . . . . . . . . . . . . . . 71
+
+
+
+Klensin                     Standards Track                     [Page 3]
+RFC 5321                          SMTP                      October 2008
+
+
+     6.1.  Reliable Delivery and Replies by Email . . . . . . . . . . 71
+     6.2.  Unwanted, Unsolicited, and "Attack" Messages . . . . . . . 72
+     6.3.  Loop Detection . . . . . . . . . . . . . . . . . . . . . . 73
+     6.4.  Compensating for Irregularities  . . . . . . . . . . . . . 73
+   7.  Security Considerations  . . . . . . . . . . . . . . . . . . . 75
+     7.1.  Mail Security and Spoofing . . . . . . . . . . . . . . . . 75
+     7.2.  "Blind" Copies . . . . . . . . . . . . . . . . . . . . . . 76
+     7.3.  VRFY, EXPN, and Security . . . . . . . . . . . . . . . . . 76
+     7.4.  Mail Rerouting Based on the 251 and 551 Response Codes . . 77
+     7.5.  Information Disclosure in Announcements  . . . . . . . . . 77
+     7.6.  Information Disclosure in Trace Fields . . . . . . . . . . 78
+     7.7.  Information Disclosure in Message Forwarding . . . . . . . 78
+     7.8.  Resistance to Attacks  . . . . . . . . . . . . . . . . . . 78
+     7.9.  Scope of Operation of SMTP Servers . . . . . . . . . . . . 78
+   8.  IANA Considerations  . . . . . . . . . . . . . . . . . . . . . 79
+   9.  Acknowledgments  . . . . . . . . . . . . . . . . . . . . . . . 80
+   10. References . . . . . . . . . . . . . . . . . . . . . . . . . . 81
+     10.1. Normative References . . . . . . . . . . . . . . . . . . . 81
+     10.2. Informative References . . . . . . . . . . . . . . . . . . 82
+   Appendix A.  TCP Transport Service . . . . . . . . . . . . . . . . 85
+   Appendix B.  Generating SMTP Commands from RFC 822 Header
+                Fields  . . . . . . . . . . . . . . . . . . . . . . . 85
+   Appendix C.  Source Routes . . . . . . . . . . . . . . . . . . . . 86
+   Appendix D.  Scenarios . . . . . . . . . . . . . . . . . . . . . . 87
+     D.1.  A Typical SMTP Transaction Scenario  . . . . . . . . . . . 88
+     D.2.  Aborted SMTP Transaction Scenario  . . . . . . . . . . . . 89
+     D.3.  Relayed Mail Scenario  . . . . . . . . . . . . . . . . . . 90
+     D.4.  Verifying and Sending Scenario . . . . . . . . . . . . . . 92
+   Appendix E.  Other Gateway Issues  . . . . . . . . . . . . . . . . 92
+   Appendix F.  Deprecated Features of RFC 821  . . . . . . . . . . . 93
+     F.1.  TURN . . . . . . . . . . . . . . . . . . . . . . . . . . . 93
+     F.2.  Source Routing . . . . . . . . . . . . . . . . . . . . . . 93
+     F.3.  HELO . . . . . . . . . . . . . . . . . . . . . . . . . . . 93
+     F.4.  #-literals . . . . . . . . . . . . . . . . . . . . . . . . 94
+     F.5.  Dates and Years  . . . . . . . . . . . . . . . . . . . . . 94
+     F.6.  Sending versus Mailing . . . . . . . . . . . . . . . . . . 94
+
+4.3.2.  Command-Reply Sequences
+
+   Each command is listed with its usual possible replies.  The prefixes
+   used before the possible replies are "I" for intermediate, "S" for
+   success, and "E" for error.  Since some servers may generate other
+   replies under special circumstances, and to allow for future
+   extension, SMTP clients SHOULD, when possible, interpret only the
+   first digit of the reply and MUST be prepared to deal with
+   unrecognized reply codes by interpreting the first digit only.
+   Unless extended using the mechanisms described in Section 2.2, SMTP
+   servers MUST NOT transmit reply codes to an SMTP client that are
+   other than three digits or that do not start in a digit between 2 and
+   5 inclusive.
+
+   These sequencing rules and, in principle, the codes themselves, can
+   be extended or modified by SMTP extensions offered by the server and
+   accepted (requested) by the client.  However, if the target is more
+   precise granularity in the codes, rather than codes for completely
+   new purposes, the system described in RFC 3463 [25] SHOULD be used in
+   preference to the invention of new codes.
+
+   In addition to the codes listed below, any SMTP command can return
+   any of the following codes if the corresponding unusual circumstances
+   are encountered:
+
+   500  For the "command line too long" case or if the command name was
+      not recognized.  Note that producing a "command not recognized"
+      error in response to the required subset of these commands is a
+      violation of this specification.  Similarly, producing a "command
+      too long" message for a command line shorter than 512 characters
+      would violate the provisions of Section 4.5.3.1.4.
+
+   501  Syntax error in command or arguments.  In order to provide for
+      future extensions, commands that are specified in this document as
+      not accepting arguments (DATA, RSET, QUIT) SHOULD return a 501
+      message if arguments are supplied in the absence of EHLO-
+      advertised extensions.
+
+   421  Service shutting down and closing transmission channel
+
+   Specific sequences are:
+
+      CONNECTION ESTABLISHMENT
+
+         S: 220
+         E: 554
+
+      EHLO or HELO
+
+         S: 250
+         E: 504 (a conforming implementation could return this code only
+         in fairly obscure cases), 550, 502 (permitted only with an old-
+         style server that does not support EHLO)
+
+      MAIL
+
+         S: 250
+         E: 552, 451, 452, 550, 553, 503, 455, 555
+
+      RCPT
+
+         S: 250, 251 (but see Section 3.4 for discussion of 251 and 551)
+         E: 550, 551, 552, 553, 450, 451, 452, 503, 455, 555
+
+      DATA
+
+         I: 354 -> data -> S: 250
+
+                           E: 552, 554, 451, 452
+
+                           E: 450, 550 (rejections for policy reasons)
+
+         E: 503, 554
+
+      RSET
+
+         S: 250
+
+      VRFY
+
+         S: 250, 251, 252
+         E: 550, 551, 553, 502, 504
+
+      EXPN
+
+         S: 250, 252
+         E: 550, 500, 502, 504
+
+   receiver need merely do some simple arithmetic to convert the values.
+   Use of UT loses information about the time zone-location of the
+   server.  If it is desired to supply a time zone name, it SHOULD be
+   included in a comment.
+
+   When the delivery SMTP server makes the "final delivery" of a
+   message, it inserts a return-path line at the beginning of the mail
+   data.  This use of return-path is required; mail systems MUST support
+   it.  The return-path line preserves the information in the <reverse-
+   path> from the MAIL command.  Here, final delivery means the message
+   has left the SMTP environment.  Normally, this would mean it had been
+   delivered to the destination user or an associated mail drop, but in
+   some cases it may be further processed and transmitted by another
+   mail system.
+
+   It is possible for the mailbox in the return path to be different
+   from the actual sender's mailbox, for example, if error responses are
+   to be delivered to a special error handling mailbox rather than to
+   the message sender.  When mailing lists are involved, this
+   arrangement is common and useful as a means of directing errors to
+   the list maintainer rather than the message originator.
+
+   The text above implies that the final mail data will begin with a
+   return path line, followed by one or more time stamp lines.  These
+   lines will be followed by the rest of the mail data: first the
+   balance of the mail header section and then the body (RFC 5322 [4]).
+
+   It is sometimes difficult for an SMTP server to determine whether or
+   not it is making final delivery since forwarding or other operations
+   may occur after the message is accepted for delivery.  Consequently,
+   any further (forwarding, gateway, or relay) systems MAY remove the
+   return path and rebuild the MAIL command as needed to ensure that
+   exactly one such line appears in a delivered message.
+
+   A message-originating SMTP system SHOULD NOT send a message that
+   already contains a Return-path header field.  SMTP servers performing
+   a relay function MUST NOT inspect the message data, and especially
+   not to the extent needed to determine if Return-path header fields
+   are present.  SMTP servers making final delivery MAY remove Return-
+   path header fields before adding their own.
+
+   The primary purpose of the Return-path is to designate the address to
+   which messages indicating non-delivery or other mail system failures
+   are to be sent.  For this to be unambiguous, exactly one return path
+   SHOULD be present when the message is delivered.  Systems using RFC
+   822 syntax with non-SMTP transports SHOULD designate an unambiguous
+   address, associated with the transport envelope, to which error
+   reports (e.g., non-delivery messages) should be sent.
+
+   Without some provision for data transparency, the character sequence
+   "<CRLF>.<CRLF>" ends the mail text and cannot be sent by the user.
+   In general, users are not aware of such "forbidden" sequences.  To
+   allow all user composed text to be transmitted transparently, the
+   following procedures are used:
+
+   o  Before sending a line of mail text, the SMTP client checks the
+      first character of the line.  If it is a period, one additional
+      period is inserted at the beginning of the line.
+
+   o  When a line of mail text is received by the SMTP server, it checks
+      the line.  If the line is composed of a single period, it is
+      treated as the end of mail indicator.  If the first character is a
+      period and there are other characters on the line, the first
+      character is deleted.
+
+   The mail data may contain any of the 128 ASCII characters.  All
+   characters are to be delivered to the recipient's mailbox, including
+   spaces, vertical and horizontal tabs, and other control characters.
+   If the transmission channel provides an 8-bit byte (octet) data
+   stream, the 7-bit ASCII codes are transmitted, right justified, in
+   the octets, with the high-order bits cleared to zero.  See
+   Section 3.6 for special treatment of these conditions in SMTP systems
+   serving a relay function.
+
+   In some systems, it may be necessary to transform the data as it is
+   received and stored.  This may be necessary for hosts that use a
+   different character set than ASCII as their local character set, that
+   store data in records rather than strings, or which use special
+   character sequences as delimiters inside mailboxes.  If such
+   transformations are necessary, they MUST be reversible, especially if
+   they are applied to mail being relayed.
+
+4.5.3.1.8.  Recipients Buffer
+
+   The minimum total number of recipients that MUST be buffered is 100
+   recipients.  Rejection of messages (for excessive recipients) with
+   fewer than 100 RCPT commands is a violation of this specification.
+   The general principle that relaying SMTP server MUST NOT, and
+   delivery SMTP servers SHOULD NOT, perform validation tests on message
+   header fields suggests that messages SHOULD NOT be rejected based on
+   the total number of recipients shown in header fields.  A server that
+   imposes a limit on the number of recipients MUST behave in an orderly
+   fashion, such as rejecting additional addresses over its limit rather
+   than silently discarding addresses previously accepted.  A client
+   that needs to deliver a message containing over 100 RCPT commands
+   SHOULD be prepared to transmit in 100-recipient "chunks" if the
+   server declines to accept more than 100 recipients in a single
+   message.
+
+4.5.3.1.9.  Treatment When Limits Exceeded
+
+   Errors due to exceeding these limits may be reported by using the
+   reply codes.  Some examples of reply codes are:
+
+      500 Line too long.
+
+   or
+
+      501 Path too long
+
+   or
+
+      452 Too many recipients (see below)
+
+   or
+
+      552 Too much mail data.
+
+4.5.3.1.10.  Too Many Recipients Code
+
+   RFC 821 [1] incorrectly listed the error where an SMTP server
+   exhausts its implementation limit on the number of RCPT commands
+   ("too many recipients") as having reply code 552.  The correct reply
+   code for this condition is 452.  Clients SHOULD treat a 552 code in
+   this case as a temporary, rather than permanent, failure so the logic
+   below works.
+
+   When a conforming SMTP server encounters this condition, it has at
+   least 100 successful RCPT commands in its recipients buffer.  If the
+   server is able to accept the message, then at least these 100
+
+point, the client is configured.  If the client detects that the
+     address is already in use (e.g., through the use of ARP), the
+     client MUST send a DHCPDECLINE message to the server and restarts
+     the configuration process.  The client SHOULD wait a minimum of ten
+     seconds before restarting the configuration process to avoid
+     excessive network traffic in case of looping.
+
+     If the client receives a DHCPNAK message, the client restarts the
+     configuration process.
+
+     The client times out and retransmits the DHCPREQUEST message if the
+     client receives neither a DHCPACK or a DHCPNAK message.  The client
+     retransmits the DHCPREQUEST according to the retransmission
+     algorithm in section 4.1.  The client should choose to retransmit
+     the DHCPREQUEST enough times to give adequate probability of
+     contacting the server without causing the client (and the user of
+     that client) to wait overly long before giving up; e.g., a client
+     retransmitting as described in section 4.1 might retransmit the
+     DHCPREQUEST message four times, for a total delay of 60 seconds,
+     before restarting the initialization procedure.  If the client
+     receives neither a DHCPACK or a DHCPNAK message after employing the
+     retransmission algorithm, the client reverts to INIT state and
+     restarts the initialization process.  The client SHOULD notify the
+     user that the initialization process has failed and is restarting.
+
+  6. The client may choose to relinquish its lease on a network address
+     by sending a DHCPRELEASE message to the server.  The client
+     identifies the lease to be released with its 'client identifier',
+     or 'chaddr' and network address in the DHCPRELEASE message. If the
+     client used a 'client identifier' when it obtained the lease, it
+     MUST use the same 'client identifier' in the DHCPRELEASE message.
+
+3.2 Client-server interaction - reusing a previously allocated network
+    address
+
+   If a client remembers and wishes to reuse a previously allocated
+   network address, a client may choose to omit some of the steps
+   described in the previous section.  The timeline diagram in figure 4
+   shows the timing relationships in a typical client-server interaction
+   for a client reusing a previously allocated network address.
+
+Klensin                     Standards Track                    [Page 64]
+RFC 5321                          SMTP                      October 2008
+
+
+   addresses will be removed from the SMTP client's queue.  When the
+   client attempts retransmission of those addresses that received 452
+   responses, at least 100 of these will be able to fit in the SMTP
+   server's recipients buffer.  Each retransmission attempt that is able
+   to deliver anything will be able to dispose of at least 100 of these
+   recipients.
+
+   If an SMTP server has an implementation limit on the number of RCPT
+   commands and this limit is exhausted, it MUST use a response code of
+   452 (but the client SHOULD also be prepared for a 552, as noted
+   above).  If the server has a configured site-policy limitation on the
+   number of RCPT commands, it MAY instead use a 5yz response code.  In
+   particular, if the intent is to prohibit messages with more than a
+   site-specified number of recipients, rather than merely limit the
+   number of recipients in a given mail transaction, it would be
+   reasonable to return a 503 response to any DATA command received
+   subsequent to the 452 (or 552) code or to simply return the 503 after
+   DATA without returning any previous negative response.
+
+4.5.3.2.  Timeouts
+
+   An SMTP client MUST provide a timeout mechanism.  It MUST use per-
+   command timeouts rather than somehow trying to time the entire mail
+   transaction.  Timeouts SHOULD be easily reconfigurable, preferably
+   without recompiling the SMTP code.  To implement this, a timer is set
+   for each SMTP command and for each buffer of the data transfer.  The
+   latter means that the overall timeout is inherently proportional to
+   the size of the message.
+
+   Based on extensive experience with busy mail-relay hosts, the minimum
+   per-command timeout values SHOULD be as follows:
+
+4.5.3.2.1.  Initial 220 Message: 5 Minutes
+
+   An SMTP client process needs to distinguish between a failed TCP
+   connection and a delay in receiving the initial 220 greeting message.
+   Many SMTP servers accept a TCP connection but delay delivery of the
+   220 message until their system load permits more mail to be
+   processed.
+
+4.5.3.2.2.  MAIL Command: 5 Minutes
+
+4.5.3.2.3.  RCPT Command: 5 Minutes
+
+   A longer timeout is required if processing of mailing lists and
+   aliases is not deferred until after the message was accepted.
+
+   Normally, DHCP servers and BOOTP relay agents attempt to deliver
+   DHCPOFFER, DHCPACK and DHCPNAK messages directly to the client using
+   uicast delivery.  The IP destination address (in the IP header) is
+   set to the DHCP 'yiaddr' address and the link-layer destination
+   address is set to the DHCP 'chaddr' address.  Unfortunately, some
+   client implementations are unable to receive such unicast IP
+   datagrams until the implementation has been configured with a valid
+   IP address (leading to a deadlock in which the client's IP address
+   cannot be delivered until the client has been configured with an IP
+   address).
+
+   A client that cannot receive unicast IP datagrams until its protocol
+   software has been configured with an IP address SHOULD set the
+   BROADCAST bit in the 'flags' field to 1 in any DHCPDISCOVER or
+   DHCPREQUEST messages that client sends.  The BROADCAST bit will
+   provide a hint to the DHCP server and BOOTP relay agent to broadcast
+   any messages to the client on the client's subnet.  A client that can
+   receive unicast IP datagrams before its protocol software has been
+   configured SHOULD clear the BROADCAST bit to 0.  The BOOTP
+   clarifications document discusses the ramifications of the use of the
+   BROADCAST bit [21].
+
+   A server or relay agent sending or relaying a DHCP message directly
+   to a DHCP client (i.e., not to a relay agent specified in the
+   'giaddr' field) SHOULD examine the BROADCAST bit in the 'flags'
+   field.  If this bit is set to 1, the DHCP message SHOULD be sent as
+   an IP broadcast using an IP broadcast address (preferably 0xffffffff)
+   as the IP destination address and the link-layer broadcast address as
+   the link-layer destination address.  If the BROADCAST bit is cleared
+   to 0, the message SHOULD be sent as an IP unicast to the IP address
+   specified in the 'yiaddr' field and the link-layer address specified
+   in the 'chaddr' field.  If unicasting is not possible, the message
+   MAY be sent as an IP broadcast using an IP broadcast address
+   (preferably 0xffffffff) as the IP destination address and the link-
+   layer broadcast address as the link-layer destination address.
+
+4.2 DHCP server administrative controls
+
+   DHCP servers are not required to respond to every DHCPDISCOVER and
+   DHCPREQUEST message they receive.  For example, a network
+   administrator, to retain stringent control over the clients attached
+   to the network, may choose to configure DHCP servers to respond only
+   to clients that have been previously registered through some external
+   mechanism.  The DHCP specification describes only the interactions
+   between clients and servers when the clients and servers choose to
+   interact; it is beyond the scope of the DHCP specification to
+   describe all of the administrative controls that system
+   administrators might want to use.  Specific DHCP server
+
+
+
+Droms                       Standards Track                    [Page 25]
+RFC 2131          Dynamic Host Configuration Protocol         March 1997
+
+
+   implementations may incorporate any controls or policies desired by a
+   network administrator.
+
+   In some environments, a DHCP server will have to consider the values
+   of the vendor class options included in DHCPDISCOVER or DHCPREQUEST
+   messages when determining the correct parameters for a particular
+   client.
+
+   A DHCP server needs to use some unique identifier to associate a
+   client with its lease.  The client MAY choose to explicitly provide
+   the identifier through the 'client identifier' option.  If the client
+   supplies a 'client identifier', the client MUST use the same 'client
+   identifier' in all subsequent messages, and the server MUST use that
+   identifier to identify the client.  If the client does not provide a
+   'client identifier' option, the server MUST use the contents of the
+   'chaddr' field to identify the client. It is crucial for a DHCP
+   client to use an identifier unique within the subnet to which the
+   client is attached in the 'client identifier' option.  Use of
+   'chaddr' as the client's unique identifier may cause unexpected
+   results, as that identifier may be associated with a hardware
+   interface that could be moved to a new client.  Some sites may choose
+   to use a manufacturer's serial number as the 'client identifier', to
+   avoid unexpected changes in a clients network address due to transfer
+   of hardware interfaces among computers.  Sites may also choose to use
+   a DNS name as the 'client identifier', causing address leases to be
+   associated with the DNS name rather than a specific hardware box.
+
+   DHCP clients are free to use any strategy in selecting a DHCP server
+   among those from which the client receives a DHCPOFFER message.  The
+   client implementation of DHCP SHOULD provide a mechanism for the user
+   to select directly the 'vendor class identifier' values.
+
+4.3 DHCP server behavior
+
+   A DHCP server processes incoming DHCP messages from a client based on
+   the current state of the binding for that client.  A DHCP server can
+   receive the following messages from a client:
+
+4.3.1 DHCPDISCOVER message
+
+   When a server receives a DHCPDISCOVER message from a client, the
+   server chooses a network address for the requesting client.  If no
+   address is available, the server may choose to report the problem to
+   the system administrator. If an address is available, the new address
+   SHOULD be chosen as follows:
+
+      o The client's current address as recorded in the client's current
+        binding, ELSE
+
+      o The client's previous address as recorded in the client's (now
+        expired or released) binding, if that address is in the server's
+        pool of available addresses and not already allocated, ELSE
+
+      o The address requested in the 'Requested IP Address' option, if that
+        address is valid and not already allocated, ELSE
+
+      o A new address allocated from the server's pool of available
+        addresses; the address is selected based on the subnet from which
+        the message was received (if 'giaddr' is 0) or on the address of
+        the relay agent that forwarded the message ('giaddr' when not 0).
+
+   As described in section 4.2, a server MAY, for administrative
+   reasons, assign an address other than the one requested, or may
+   refuse to allocate an address to a particular client even though free
+   addresses are available.
+
+   Note that, in some network architectures (e.g., internets with more
+   than one IP subnet assigned to a physical network segment), it may be
+   the case that the DHCP client should be assigned an address from a
+   different subnet than the address recorded in 'giaddr'.  Thus, DHCP
+   does not require that the client be assigned as address from the
+   subnet in 'giaddr'.  A server is free to choose some other subnet,
+   and it is beyond the scope of the DHCP specification to describe ways
+   in which the assigned IP address might be chosen.
+
+   While not required for correct operation of DHCP, the server SHOULD
+   NOT reuse the selected network address before the client responds to
+   the server's DHCPOFFER message.  The server may choose to record the
+   address as offered to the client.
+
+   The server must also choose an expiration time for the lease, as
+   follows:
+
+
+
+Droms                       Standards Track                    [Page 27]
+RFC 2131          Dynamic Host Configuration Protocol         March 1997
+
+
+   o IF the client has not requested a specific lease in the
+     DHCPDISCOVER message and the client already has an assigned network
+     address, the server returns the lease expiration time previously
+     assigned to that address (note that the client must explicitly
+     request a specific lease to extend the expiration time on a
+     previously assigned address), ELSE
+
+   o IF the client has not requested a specific lease in the
+     DHCPDISCOVER message and the client does not have an assigned
+     network address, the server assigns a locally configured default
+     lease time, ELSE
+
+   o IF the client has requested a specific lease in the DHCPDISCOVER
+     message (regardless of whether the client has an assigned network
+     address), the server may choose either to return the requested
+     lease (if the lease is acceptable to local policy) or select
+     another lease.
+
+			    Abstract
+
+The implementation of protocol P on a sending host S decides,
+through protocol P's routing mechanism, that it wants to transmit
+to a target host T located some place on a connected piece of
+10Mbit Ethernet cable.  To actually transmit the Ethernet packet
+a 48.bit Ethernet address must be generated.  The addresses of
+hosts within protocol P are not always compatible with the
+corresponding Ethernet address (being different lengths or
+values).  Presented here is a protocol that allows dynamic
+distribution of the information needed to build tables to
+translate an address A in protocol P's address space into a
+48.bit Ethernet address.
+
+Generalizations have been made which allow the protocol to be
+used for non-10Mbit Ethernet hardware.  Some packet radio
+networks are examples of such hardware.
+
+--------------------------------------------------------------------
+
+The protocol proposed here is the result of a great deal of
+discussion with several other people, most notably J. Noel
+Chiappa, Yogen Dalal, and James E. Kulp, and helpful comments
+from David Moon.
+
+
+
+
+[The purpose of this RFC is to present a method of Converting
+Protocol Addresses (e.g., IP addresses) to Local Network
+Addresses (e.g., Ethernet addresses).  This is a issue of general
+concern in the ARPA Internet community at this time.  The
+method proposed here is presented for your consideration and
+comment.  This is not the specification of a Internet Standard.]
+
+Notes:
+------       
+
+This protocol was originally designed for the DEC/Intel/Xerox
+10Mbit Ethernet.  It has been generalized to allow it to be used
+for other types of networks.  Much of the discussion will be
+directed toward the 10Mbit Ethernet.  Generalizations, where
+applicable, will follow the Ethernet-specific discussion.
+
+DOD Internet Protocol will be referred to as Internet.
+
+Numbers here are in the Ethernet standard, which is high byte
+first.  This is the opposite of the byte addressing of machines
+such as PDP-11s and VAXes.  Therefore, special care must be taken
+with the opcode field (ar$op) described below.
+
+An agreed upon authority is needed to manage hardware name space
+values (see below).  Until an official authority exists, requests
+should be submitted to
+	David C. Plummer
+	Symbolics, Inc.
+	243 Vassar Street
+	Cambridge, Massachusetts  02139
+Alternatively, network mail can be sent to DCP@MIT-MC.
+
+The Problem:
+------------
+
+The world is a jungle in general, and the networking game
+contributes many animals.  At nearly every layer of a network
+architecture there are several potential protocols that could be
+used.  For example, at a high level, there is TELNET and SUPDUP
+for remote login.  Somewhere below that there is a reliable byte
+stream protocol, which might be CHAOS protocol, DOD TCP, Xerox
+BSP or DECnet.  Even closer to the hardware is the logical
+transport layer, which might be CHAOS, DOD Internet, Xerox PUP,
+or DECnet.  The 10Mbit Ethernet allows all of these protocols
+(and more) to coexist on a single cable by means of a type field
+in the Ethernet packet header.  However, the 10Mbit Ethernet
+requires 48.bit addresses on the physical cable, yet most
+protocol addresses are not 48.bits long, nor do they necessarily
+have any relationship to the 48.bit Ethernet address of the
+hardware.  For example, CHAOS addresses are 16.bits, DOD Internet
+addresses are 32.bits, and Xerox PUP addresses are 8.bits.  A
+protocol is needed to dynamically distribute the correspondences
+between a <protocol, address> pair and a 48.bit Ethernet address.
+
+Motivation:
+-----------
+
+Use of the 10Mbit Ethernet is increasing as more manufacturers
+supply interfaces that conform to the specification published by
+DEC, Intel and Xerox.  With this increasing availability, more
+and more software is being written for these interfaces.  There
+are two alternatives: (1) Every implementor invents his/her own
+method to do some form of address resolution, or (2) every
+implementor uses a standard so that his/her code can be
+distributed to other systems without need for modification.  This
+proposal attempts to set the standard.
+
+Definitions:
+------------
+
+Define the following for referring to the values put in the TYPE
+field of the Ethernet packet header:
+	ether_type$XEROX_PUP,
+	ether_type$DOD_INTERNET,
+	ether_type$CHAOS, 
+and a new one:
+	ether_type$ADDRESS_RESOLUTION.  
+Also define the following values (to be discussed later):
+	ares_op$REQUEST (= 1, high byte transmitted first) and
+	ares_op$REPLY   (= 2), 
+and
+	ares_hrd$Ethernet (= 1).
+
+Packet format:
+--------------
+
+Packet Generation:
+------------------
+
+As a packet is sent down through the network layers, routing
+determines the protocol address of the next hop for the packet
+and on which piece of hardware it expects to find the station
+with the immediate target protocol address.  In the case of the
+10Mbit Ethernet, address resolution is needed and some lower
+layer (probably the hardware driver) must consult the Address
+Resolution module (perhaps implemented in the Ethernet support
+module) to convert the <protocol type, target protocol address>
+pair to a 48.bit Ethernet address.  The Address Resolution module
+tries to find this pair in a table.  If it finds the pair, it
+gives the corresponding 48.bit Ethernet address back to the
+caller (hardware driver) which then transmits the packet.  If it
+does not, it probably informs the caller that it is throwing the
+packet away (on the assumption the packet will be retransmitted
+by a higher network layer), and generates an Ethernet packet with
+a type field of ether_type$ADDRESS_RESOLUTION.  The Address
+Resolution module then sets the ar$hrd field to
+ares_hrd$Ethernet, ar$pro to the protocol type that is being
+resolved, ar$hln to 6 (the number of bytes in a 48.bit Ethernet
+address), ar$pln to the length of an address in that protocol,
+ar$op to ares_op$REQUEST, ar$sha with the 48.bit ethernet address
+of itself, ar$spa with the protocol address of itself, and ar$tpa
+with the protocol address of the machine that is trying to be
+accessed.  It does not set ar$tha to anything in particular,
+because it is this value that it is trying to determine.  It
+could set ar$tha to the broadcast address for the hardware (all
+ones in the case of the 10Mbit Ethernet) if that makes it
+convenient for some aspect of the implementation.  It then causes
+this packet to be broadcast to all stations on the Ethernet cable
+originally determined by the routing mechanism.
+
+
+Packet Reception:
+-----------------
+
+When an address resolution packet is received, the receiving
+Ethernet module gives the packet to the Address Resolution module
+which goes through an algorithm similar to the following.
+Negative conditionals indicate an end of processing and a
+discarding of the packet.
+
+?Do I have the hardware type in ar$hrd?
+Yes: (almost definitely)
+  [optionally check the hardware length ar$hln]
+  ?Do I speak the protocol in ar$pro?
+  Yes:
+    [optionally check the protocol length ar$pln]
+    Merge_flag := false
+    If the pair <protocol type, sender protocol address> is
+        already in my translation table, update the sender
+	hardware address field of the entry with the new
+	information in the packet and set Merge_flag to true. 
+    ?Am I the target protocol address?
+    Yes:
+      If Merge_flag is false, add the triplet <protocol type,
+          sender protocol address, sender hardware address> to
+	  the translation table.
+      ?Is the opcode ares_op$REQUEST?  (NOW look at the opcode!!)
+      Yes:
+	Swap hardware and protocol fields, putting the local
+	    hardware and protocol addresses in the sender fields.
+	Set the ar$op field to ares_op$REPLY
+	Send the packet to the (new) target hardware address on
+	    the same hardware on which the request was received.
+
+Notice that the <protocol type, sender protocol address, sender
+hardware address> triplet is merged into the table before the
+opcode is looked at.  This is on the assumption that communcation
+is bidirectional; if A has some reason to talk to B, then B will
+probably have some reason to talk to A.  Notice also that if an
+entry already exists for the <protocol type, sender protocol
+address> pair, then the new hardware address supersedes the old
+one.  Related Issues gives some motivation for this.
+
+Generalization:  The ar$hrd and ar$hln fields allow this protocol
+and packet format to be used for non-10Mbit Ethernets.  For the
+10Mbit Ethernet <ar$hrd, ar$hln> takes on the value <1, 6>.  For
+other hardware networks, the ar$pro field may no longer
+correspond to the Ethernet type field, but it should be
+associated with the protocol whose address resolution is being
+sought.
+
+6.  LCP Configuration Options
+
+   LCP Configuration Options allow negotiation of modifications to the
+   default characteristics of a point-to-point link.  If a Configuration
+   Option is not included in a Configure-Request packet, the default
+   value for that Configuration Option is assumed.
+
+   Some Configuration Options MAY be listed more than once.  The effect
+   of this is Configuration Option specific, and is specified by each
+   such Configuration Option description.  (None of the Configuration
+   Options in this specification can be listed more than once.)
+
+   The end of the list of Configuration Options is indicated by the
+   Length field of the LCP packet.
+
+   Unless otherwise specified, all Configuration Options apply in a
+   half-duplex fashion; typically, in the receive direction of the link
+   from the point of view of the Configure-Request sender.
+
+   Design Philosophy
+
+      The options indicate additional capabilities or requirements of
+      the implementation that is requesting the option.  An
+      implementation which does not understand any option SHOULD
+      interoperate with one which implements every option.
+
+      A default is specified for each option which allows the link to
+      correctly function without negotiation of the option, although
+      perhaps with less than optimal performance.
+
+      Except where explicitly specified, acknowledgement of an option
+      does not require the peer to take any additional action other than
+      the default.
+
+      It is not necessary to send the default values for the options in
+      a Configure-Request.
+
+
+   A summary of the Configuration Option format is shown below.  The
+   fields are transmitted from left to right.
+
+Simpson                                                        [Page 46]
+RFC 1661                Point-to-Point Protocol                July 1994
+
+
+      Reception of a Magic-Number field equal to the negotiated local
+      Magic-Number indicates a looped-back link.  Reception of a Magic-
+      Number other than the negotiated local Magic-Number, the peer's
+      negotiated Magic-Number, or zero if the peer didn't negotiate one,
+      indicates a link which has been (mis)configured for communications
+      with a different peer.
+
+      Procedures for recovery from either case are unspecified, and may
+      vary from implementation to implementation.  A somewhat
+      pessimistic procedure is to assume a LCP Down event.  A further
+      Open event will begin the process of re-establishing the link,
+      which can't complete until the looped-back condition is
+      terminated, and Magic-Numbers are successfully negotiated.  A more
+      optimistic procedure (in the case of a looped-back link) is to
+      begin transmitting LCP Echo-Request packets until an appropriate
+      Echo-Reply is received, indicating a termination of the looped-
+      back condition.
+
+   A summary of the Magic-Number Configuration Option format is shown
+   below.  The fields are transmitted from left to right.
+
+6.5.  Protocol-Field-Compression (PFC)
+
+   Description
+
+      This Configuration Option provides a method to negotiate the
+      compression of the PPP Protocol field.  By default, all
+      implementations MUST transmit packets with two octet PPP Protocol
+      fields.
+
+      PPP Protocol field numbers are chosen such that some values may be
+      compressed into a single octet form which is clearly
+      distinguishable from the two octet form.  This Configuration
+      Option is sent to inform the peer that the implementation can
+      receive such single octet Protocol fields.
+
+      As previously mentioned, the Protocol field uses an extension
+      mechanism consistent with the ISO 3309 extension mechanism for the
+      Address field; the Least Significant Bit (LSB) of each octet is
+      used to indicate extension of the Protocol field.  A binary "0" as
+      the LSB indicates that the Protocol field continues with the
+      following octet.  The presence of a binary "1" as the LSB marks
+      the last octet of the Protocol field.  Notice that any number of
+      "0" octets may be prepended to the field, and will still indicate
+      the same value (consider the two binary representations for 3,
+      00000011 and 00000000 00000011).
+
+      When using low speed links, it is desirable to conserve bandwidth
+      by sending as little redundant data as possible.  The Protocol-
+      Field-Compression Configuration Option allows a trade-off between
+      implementation simplicity and bandwidth efficiency.  If
+      successfully negotiated, the ISO 3309 extension mechanism may be
+      used to compress the Protocol field to one octet instead of two.
+      The large majority of packets are compressible since data
+      protocols are typically assigned with Protocol field values less
+      than 256.
+
+      Compressed Protocol fields MUST NOT be transmitted unless this
+      Configuration Option has been negotiated.  When negotiated, PPP
+      implementations MUST accept PPP packets with either double-octet
+      or single-octet Protocol fields, and MUST NOT distinguish between
+      them.
+
+      The Protocol field is never compressed when sending any LCP
+      packet.  This rule guarantees unambiguous recognition of LCP
+      packets.
+
+      When a Protocol field is compressed, the Data Link Layer FCS field
+      is calculated on the compressed frame, not the original
+
+1.1.  Motivation
+
+  The Internet Protocol is designed for use in interconnected systems of
+  packet-switched computer communication networks.  Such a system has
+  been called a "catenet" [1].  The internet protocol provides for
+  transmitting blocks of data called datagrams from sources to
+  destinations, where sources and destinations are hosts identified by
+  fixed length addresses.  The internet protocol also provides for
+  fragmentation and reassembly of long datagrams, if necessary, for
+  transmission through "small packet" networks.
+
+1.2.  Scope
+
+  The internet protocol is specifically limited in scope to provide the
+  functions necessary to deliver a package of bits (an internet
+  datagram) from a source to a destination over an interconnected system
+  of networks.  There are no mechanisms to augment end-to-end data
+  reliability, flow control, sequencing, or other services commonly
+  found in host-to-host protocols.  The internet protocol can capitalize
+  on the services of its supporting networks to provide various types
+  and qualities of service.
+
+                                                               [Page 11]
+
+                                                          September 1981
+Internet Protocol
+Specification
+
+       Compartments (C field):  16 bits
+
+          An all zero value is used when the information transmitted is
+          not compartmented.  Other values for the compartments field
+          may be obtained from the Defense Intelligence Agency.
+
+        Handling Restrictions (H field):  16 bits
+
+          The values for the control and release markings are
+          alphanumeric digraphs and are defined in the Defense
+          Intelligence Agency Manual DIAM 65-19, "Standard Security
+          Markings".
+
+        Transmission Control Code (TCC field):  24 bits
+
+          Provides a means to segregate traffic and define controlled
+          communities of interest among subscribers. The TCC values are
+          trigraphs, and are available from HQ DCA Code 530.
+
+        Must be copied on fragmentation.  This option appears at most
+        once in a datagram.
+
+      Loose Source and Record Route
+
+The actual values assigned for network addresses is given in
+    "Assigned Numbers" [9].
+
+    The local address, assigned by the local network, must allow for a
+    single physical host to act as several distinct internet hosts.
+    That is, there must be a mapping between internet host addresses and
+    network/host interfaces that allows several internet addresses to
+    correspond to one interface.  It must also be allowed for a host to
+    have several physical interfaces and to treat the datagrams from
+    several of them as if they were all addressed to a single host.
+
+    Address mappings between internet addresses and addresses for
+    ARPANET, SATNET, PRNET, and other networks are described in "Address
+    Mappings" [5].
+
+  Fragmentation and Reassembly.
+
+    The internet identification field (ID) is used together with the
+    source and destination address, and the protocol fields, to identify
+    datagram fragments for reassembly.
+
+    The More Fragments flag bit (MF) is set if the datagram is not the
+    last fragment.  The Fragment Offset field identifies the fragment
+    location, relative to the beginning of the original unfragmented
+    datagram.  Fragments are counted in units of 8 octets.  The
+
+
+[Page 24]                                                               
+
+September 1981                                                          
+                                                       Internet Protocol
+                                                           Specification
+
+
+
+    fragmentation strategy is designed so than an unfragmented datagram
+    has all zero fragmentation information (MF = 0, fragment offset =
+    0).  If an internet datagram is fragmented, its data portion must be
+    broken on 8 octet boundaries.
+
+    This format allows 2**13 = 8192 fragments of 8 octets each for a
+    total of 65,536 octets.  Note that this is consistent with the the
+    datagram total length field (of course, the header is counted in the
+    total length and not in the fragments).
+
+    When fragmentation occurs, some options are copied, but others
+    remain with the first fragment only.
+
+    Every internet module must be able to forward a datagram of 68
+    octets without further fragmentation.  This is because an internet
+    header may be up to 60 octets, and the minimum fragment is 8 octets.
+
+    Every internet destination must be able to receive a datagram of 576
+    octets either in one piece or in fragments to be reassembled.
+
+      either identically or through a partial overlap, this procedure
+      will use the more recently arrived copy in the data buffer and
+      datagram delivered.
+
+  Identification
+
+    The choice of the Identifier for a datagram is based on the need to
+    provide a way to uniquely identify the fragments of a particular
+    datagram.  The protocol module assembling fragments judges fragments
+    to belong to the same datagram if they have the same source,
+    destination, protocol, and Identifier.  Thus, the sender must choose
+    the Identifier to be unique for this source, destination pair and
+    protocol for the time the datagram (or any fragment of it) could be
+    alive in the internet.
+
+    It seems then that a sending protocol module needs to keep a table
+    of Identifiers, one entry for each destination it has communicated
+    with in the last maximum packet lifetime for the internet.
+
+    However, since the Identifier field allows 65,536 different values,
+    some host may be able to simply use unique identifiers independent
+    of destination.
+
+    It is appropriate for some higher level protocols to choose the
+    identifier. For example, TCP protocol modules may retransmit an
+    identical TCP segment, and the probability for correct reception
+    would be enhanced if the retransmission carried the same identifier
+    as the original transmission since fragments of either datagram
+    could be used to construct a correct TCP segment.
+
+  Type of Service
+
+    The type of service (TOS) is for internet service quality selection.
+    The type of service is specified along the abstract parameters
+    precedence, delay, throughput, and reliability.  These abstract
+    parameters are to be mapped into the actual service parameters of
+    the particular networks the datagram traverses.
+
+    Precedence.  An independent measure of the importance of this
+    datagram.
+
+    Delay.  Prompt delivery is important for datagrams with this
+    indication.
+
+    Throughput.  High data rate is important for datagrams with this
+    indication.
+
+   in the packet, for any option whose data may change en-route, its
+   entire Option Data field must be treated as zero-valued octets when
+   computing or verifying the packet's authenticating value.
+
+      0 - Option Data does not change en-route
+
+      1 - Option Data may change en-route
+
+   The three high-order bits described above are to be treated as part
+   of the Option Type, not independent of the Option Type.  That is, a
+   particular option is identified by a full 8-bit Option Type, not just
+   the low-order 5 bits of an Option Type.
+
+   The same Option Type numbering space is used for both the Hop-by-Hop
+   Options header and the Destination Options header.  However, the
+   specification of a particular option may restrict its use to only one
+   of those two headers.
+
+   Individual options may have specific alignment requirements, to
+   ensure that multi-octet values within Option Data fields fall on
+   natural boundaries.  The alignment requirement of an option is
+   specified using the notation xn+y, meaning the Option Type must
+   appear at an integer multiple of x octets from the start of the
+   header, plus y octets.  For example:
+
+      2n    means any 2-octet offset from the start of the header.
+      8n+2  means any 8-octet offset from the start of the header,
+            plus 2 octets.
+
+   There are two padding options which are used when necessary to align
+   subsequent options and to pad out the containing header to a multiple
+   of 8 octets in length.  These padding options must be recognized by
+   all IPv6 implementations:
+
+A Routing header is not examined or processed until it reaches the
+   node identified in the Destination Address field of the IPv6 header.
+   In that node, dispatching on the Next Header field of the immediately
+   preceding header causes the Routing header module to be invoked,
+   which, in the case of Routing Type 0, performs the following
+   algorithm:

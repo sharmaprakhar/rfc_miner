@@ -1,0 +1,4 @@
+|Authentication|Token Length|Token |MAC or Signature
+|Data Length |
+
+|(over TLS exporter content)

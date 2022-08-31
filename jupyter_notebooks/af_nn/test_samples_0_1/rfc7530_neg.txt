@@ -1,0 +1,80 @@
+   10. Client-Side Caching ..........................................139
+      10.1. Performance Challenges for Client-Side Caching ..........139
+      10.2. Delegation and Callbacks ................................140
+           10.2.1. Delegation Recovery ..............................142
+      10.3. Data Caching ............................................147
+           10.3.1. Data Caching and OPENs ...........................147
+           10.3.2. Data Caching and File Locking ....................148
+           10.3.3. Data Caching and Mandatory File Locking ..........150
+           10.3.4. Data Caching and File Identity ...................150
+      10.4. Open Delegation .........................................151
+           10.4.1. Open Delegation and Data Caching .................154
+           10.4.2. Open Delegation and File Locks ...................155
+           10.4.3. Handling of CB_GETATTR ...........................155
+           10.4.4. Recall of Open Delegation ........................158
+           10.4.5. OPEN Delegation Race with CB_RECALL ..............160
+           10.4.6. Clients That Fail to Honor Delegation Recalls ....161
+           10.4.7. Delegation Revocation ............................162
+      10.5. Data Caching and Revocation .............................162
+           10.5.1. Revocation Recovery for Write Open Delegation ....163
+      10.6. Attribute Caching .......................................164
+      10.7. Data and Metadata Caching and Memory-Mapped Files .......166
+      10.8. Name Caching ............................................168
+      10.9. Directory Caching .......................................169
+   11. Minor Versioning .............................................170
+   12. Internationalization .........................................170
+      12.1. Introduction ............................................170
+      12.2. Limitations on Internationalization-Related
+            Processing in the NFSv4 Context .........................172
+      12.3. Summary of Server Behavior Types ........................173
+      12.4. String Encoding .........................................173
+      12.5. Normalization ...........................................174
+      12.6. Types with Processing Defined by Other Internet Areas ...175
+      12.7. Errors Related to UTF-8 .................................177
+      12.8. Servers That Accept File Component Names That
+            Are Not Valid UTF-8 Strings .............................177
+1.1.  Requirements Language
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119],
+   except where "REQUIRED" and "RECOMMENDED" are used as qualifiers to
+   distinguish classes of attributes as described in Sections 1.4.3.2
+   and 5 of this document.          
+1.4.1.  RPC and Security
+   As with previous versions of NFS, the XDR and RPC mechanisms used for
+   the NFSv4 protocol are those defined in [RFC4506] and [RFC5531].  To
+   meet end-to-end security requirements, the RPCSEC_GSS framework (both
+   version 1 in [RFC2203] and version 2 in [RFC5403]) will be used to
+   extend the basic RPC security.  With the use of RPCSEC_GSS, various
+   mechanisms can be provided to offer authentication, integrity, and
+   privacy to the NFSv4 protocol.  Kerberos V5 will be used as described
+   in [RFC4121] to provide one security framework.  With the use of
+   RPCSEC_GSS, other mechanisms may also be specified and used for NFSv4
+   security.
+   To enable in-band security negotiation, the NFSv4 protocol has added
+   a new operation that provides the client with a method of querying
+   the server about its policies regarding which security mechanisms
+   must be used for access to the server's file system resources.  With
+   this, the client can securely match the security mechanism that meets
+   the policies specified at both the client and server.  
+   Servers that limit NFS access to "shares" or "exported" file systems
+   should provide a pseudo-file system into which the exported file
+   systems can be integrated, so that clients can browse the server's
+   namespace.  The clients' view of a pseudo-file system will be limited
+   to paths that lead to exported file systems.
+   If the underlying file system at the server is only accessible in a
+   read-only mode and the OPEN request has specified
+   OPEN4_SHARE_ACCESS_WRITE or OPEN4_SHARE_ACCESS_BOTH, the server will
+   return NFS4ERR_ROFS to indicate a read-only file system.
+   As with the CREATE operation, the server MUST derive the owner, owner
+   ACE, group, or group ACE if any of the four attributes are required
+   and supported by the server's file system.  For an OPEN with the
+   EXCLUSIVE4 createmode, the server has no choice, since such OPEN
+   calls do not include the createattrs field.  Conversely, if
+   createattrs is specified and includes owner or group (or
+   corresponding ACEs) that the principal in the RPC's credentials does
+   not have authorization to create files for, then the server may
+   return NFS4ERR_PERM.
+   In the case where an OPEN specifies a size of zero (e.g., truncation)
+   and the file has named attributes, the named attributes are left as
+   is.  They are not removed.   

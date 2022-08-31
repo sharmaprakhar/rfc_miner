@@ -1,0 +1,114 @@
+1.2.  Scope
+  The TCP is intended to provide a reliable process-to-process
+  communication service in a multinetwork environment.  The TCP is
+  intended to be a host-to-host protocol in common use in multiple
+  networks.
+1.3.  About this Document
+  This document represents a specification of the behavior required of
+  any TCP implementation, both in its interactions with higher level
+  protocols and in its interactions with other TCPs.  The rest of this
+  Multiplexing:
+
+    To allow for many processes within a single Host to use TCP
+    communication facilities simultaneously, the TCP provides a set of
+    addresses or ports within each host.  Concatenated with the network
+    and host addresses from the internet communication layer, this forms
+    a socket.  A pair of sockets uniquely identifies each connection.
+    That is, a socket may be simultaneously used in multiple
+    connections.
+
+    The binding of ports to processes is handled independently by each
+    Host.  However, it proves useful to attach frequently used processes
+    (e.g., a "logger" or timesharing service) to fixed sockets which are
+    made known to the public.  These services can then be accessed
+    through the known addresses.  Establishing and learning the port
+    addresses of other processes may involve more dynamic mechanisms.
+
+  Connections:
+
+    The reliability and flow control mechanisms described above require
+    that TCPs initialize and maintain certain status information for
+    each data stream.  The combination of this information, including
+    sockets, sequence numbers, and window sizes, is called a connection.
+    Each connection is uniquely specified by a pair of sockets
+    identifying its two sides.
+
+    When two processes wish to communicate, their TCP's must first
+    establish a connection (initialize the status information on each
+    side).  When their communication is complete, the connection is
+    terminated or closed to free the resources for other uses.
+
+    Since connections must be established between unreliable hosts and
+    over the unreliable internet communication system, a handshake
+    mechanism with clock-based sequence numbers is used to avoid
+    erroneous initialization of connections.
+
+  Precedence and Security:
+
+    The users of TCP may indicate the security and precedence of their
+    communication.  Provision is made for default values to be used when
+    these features are not needed.  
+  If there are several pending passive OPENs (recorded in TCBs) with the
+  same local socket, an foreign active OPEN will be matched to a TCB
+  with the specific foreign socket in the foreign active OPEN, if such a
+  TCB exists, before selecting a TCB with an unspecified foreign socket.
+
+  The procedures to establish connections utilize the synchronize (SYN)
+  control flag and involves an exchange of three messages.  This
+  exchange has been termed a three-way hand shake [3].
+
+  A connection is initiated by the rendezvous of an arriving segment
+  containing a SYN and a waiting TCB entry each created by a user OPEN
+  command.  The matching of local and foreign sockets determines when a
+  connection has been initiated.  The connection becomes "established"
+  when sequence numbers have been synchronized in both directions.
+
+  The clearing of a connection also involves the exchange of segments,
+  in this case carrying the FIN control flag.
+
+2.8.  Data Communication
+
+  The data that flows on a connection may be thought of as a stream of
+  octets.  The sending user indicates in each SEND call whether the data
+  in that call (and any preceeding calls) should be immediately pushed
+  through to the receiving user by the setting of the PUSH flag.
+
+  A sending TCP is allowed to collect data from the sending user and to
+  send that data in segments at its own convenience, until the push
+  function is signaled, then it must send all unsent data.  When a
+  receiving TCP sees the PUSH flag, it must not wait for more data from
+  the sending TCP before passing the data to the receiving process.
+
+  There is no necessary relationship between push functions and segment
+  boundaries.  The data in any particular segment may be the result of a
+  single SEND call, in whole or part, or of multiple SEND calls.
+
+  The purpose of push function and the PUSH flag is to push data through
+  from the sending user to the receiving user.  It does not provide a
+  record service.
+
+  There is a coupling between the push function and the use of buffers
+  of data that cross the TCP/user interface.  Each time a PUSH flag is
+  associated with data placed into the receiving user's buffer, the
+  buffer is returned to the user for processing even if the buffer is
+  not filled.  If data arrives that fills the user's buffer before a
+  PUSH is seen, the data is passed to the user in buffer size units.
+
+  TCP also provides a means to communicate to the receiver of data that
+  at some point further along in the data stream than the receiver is
+    implementation of a trade-off between memory and messages to provide
+  information for this checking.
+
+  The simplest three-way handshake is shown in figure 7 below.  The
+  figures should be interpreted in the following way.  Each line is
+  numbered for reference purposes.  Right arrows (-->) indicate
+  departure of a TCP segment from TCP A to TCP B, or arrival of a
+  segment at B from A.  Left arrows (<--), indicate the reverse.
+  Ellipsis (...) indicates a segment which is still in the network
+  (delayed).  An "XXX" indicates a segment which is lost or rejected.
+  Comments appear in parentheses.  TCP states represent the state AFTER
+  the departure or arrival of the segment (whose contents are shown in
+  the center of each line).  Segment contents are shown in abbreviated
+  form, with sequence number, control flags, and ACK field.  Other
+  fields such as window, addresses, lengths, and text have been left out
+  in the interest of clarity.

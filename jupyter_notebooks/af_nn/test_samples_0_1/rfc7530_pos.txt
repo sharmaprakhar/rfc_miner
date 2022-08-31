@@ -1,0 +1,105 @@
+      +-----------------+----+------------+-----+-------------------+
+      | Name            | ID | Data Type  | Acc | Defined in        |
+      +-----------------+----+------------+-----+-------------------+
+      | supported_attrs | 0  | bitmap4    | R   | Section 5.8.1.1   |
+      | type            | 1  | nfs_ftype4 | R   | Section 5.8.1.2   |
+      | fh_expire_type  | 2  | uint32_t   | R   | Section 5.8.1.3   |
+      | change          | 3  | changeid4  | R   | Section 5.8.1.4   |
+      | size            | 4  | uint64_t   | R W | Section 5.8.1.5   |
+      | link_support    | 5  | bool       | R   | Section 5.8.1.6   |
+      | symlink_support | 6  | bool       | R   | Section 5.8.1.7   |
+      | named_attr      | 7  | bool       | R   | Section 5.8.1.8   |
+      | fsid            | 8  | fsid4      | R   | Section 5.8.1.9   |
+      | unique_handles  | 9  | bool       | R   | Section 5.8.1.10  |
+      | lease_time      | 10 | nfs_lease4 | R   | Section 5.8.1.11  |
+      | rdattr_error    | 11 | nfsstat4   | R   | Section 5.8.1.12  |
+      | filehandle      | 19 | nfs_fh4    | R   | Section 5.8.1.13  |
+      +-----------------+----+------------+-----+-------------------+
+   +-------------------+----+-----------------+-----+------------------+
+   | Name              | ID | Data Type       | Acc | Defined in       |
+   +-------------------+----+-----------------+-----+------------------+
+   | acl               | 12 | nfsace4<>       | R W | Section 6.2.1    |
+   | aclsupport        | 13 | uint32_t        | R   | Section 6.2.1.2  |
+   | archive           | 14 | bool            | R W | Section 5.8.2.1  |
+   | cansettime        | 15 | bool            | R   | Section 5.8.2.2  |
+   | case_insensitive  | 16 | bool            | R   | Section 5.8.2.3  |
+   | case_preserving   | 17 | bool            | R   | Section 5.8.2.4  |
+   | chown_restricted  | 18 | bool            | R   | Section 5.8.2.5  |
+   | fileid            | 20 | uint64_t        | R   | Section 5.8.2.6  |
+   | files_avail       | 21 | uint64_t        | R   | Section 5.8.2.7  |
+   | files_free        | 22 | uint64_t        | R   | Section 5.8.2.8  |
+   | files_total       | 23 | uint64_t        | R   | Section 5.8.2.9  |
+   | fs_locations      | 24 | fs_locations4   | R   | Section 5.8.2.10 |
+   | hidden            | 25 | bool            | R W | Section 5.8.2.11 |
+   | homogeneous       | 26 | bool            | R   | Section 5.8.2.12 |
+   | maxfilesize       | 27 | uint64_t        | R   | Section 5.8.2.13 |
+   | maxlink           | 28 | uint32_t        | R   | Section 5.8.2.14 |
+   | maxname           | 29 | uint32_t        | R   | Section 5.8.2.15 |
+   | maxread           | 30 | uint64_t        | R   | Section 5.8.2.16 |
+   | maxwrite          | 31 | uint64_t        | R   | Section 5.8.2.17 |
+   | mimetype          | 32 | ascii_          | R W | Section 5.8.2.18 |
+   |                   |    |   REQUIRED4<>   |     |                  |
+   | mode              | 33 | mode4           | R W | Section 6.2.2    |
+   | mounted_on_fileid | 55 | uint64_t        | R   | Section 5.8.2.19 |
+   | no_trunc          | 34 | bool            | R   | Section 5.8.2.20 |
+   | numlinks          | 35 | uint32_t        | R   | Section 5.8.2.21 |
+   | owner             | 36 | utf8str_mixed   | R W | Section 5.8.2.22 |
+   | owner_group       | 37 | utf8str_mixed   | R W | Section 5.8.2.23 |
+   | quota_avail_hard  | 38 | uint64_t        | R   | Section 5.8.2.24 |
+   | quota_avail_soft  | 39 | uint64_t        | R   | Section 5.8.2.25 |
+   | quota_used        | 40 | uint64_t        | R   | Section 5.8.2.26 |
+   | rawdev            | 41 | specdata4       | R   | Section 5.8.2.27 |
+   | space_avail       | 42 | uint64_t        | R   | Section 5.8.2.28 |
+   | space_free        | 43 | uint64_t        | R   | Section 5.8.2.29 |
+   | space_total       | 44 | uint64_t        | R   | Section 5.8.2.30 |
+   | space_used        | 45 | uint64_t        | R   | Section 5.8.2.31 |
+   | system            | 46 | bool            | R W | Section 5.8.2.32 |
+   | time_access       | 47 | nfstime4        | R   | Section 5.8.2.33 |
+   | time_access_set   | 48 | settime4        | W   | Section 5.8.2.34 |
+   | time_backup       | 49 | nfstime4        | R W | Section 5.8.2.35 |
+   | time_create       | 50 | nfstime4        | R W | Section 5.8.2.36 |
+   | time_delta        | 51 | nfstime4        | R   | Section 5.8.2.37 |
+   | time_metadata     | 52 | nfstime4        | R   | Section 5.8.2.38 |
+   | time_modify       | 53 | nfstime4        | R   | Section 5.8.2.39 |
+   | time_modify_set   | 54 | settime4        | W   | Section 5.8.2.40 |
+   +-------------------+----+-----------------+-----+------------------+
+   enum nfs_lock_type4 {
+           READ_LT         = 1,
+           WRITE_LT        = 2,
+           READW_LT        = 3,    /* blocking read */
+           WRITEW_LT       = 4     /* blocking write */
+   };
+   enum open_claim_type4 {
+           CLAIM_NULL              = 0,
+           CLAIM_PREVIOUS          = 1,
+           CLAIM_DELEGATE_CUR      = 2,
+           CLAIM_DELEGATE_PREV     = 3
+   };
+   +---------------+---------------------------------------------------+
+   | Who           | Description                                       |
+   +---------------+---------------------------------------------------+
+   | OWNER         | The owner of the file.                            |
+   | GROUP         | The group associated with the file.               |
+   | EVERYONE      | The world, including the owner and owning group.  |
+   | INTERACTIVE   | Accessed from an interactive terminal.            |
+   | NETWORK       | Accessed via the network.                         |
+   | DIALUP        | Accessed as a dialup user to the server.          |
+   | BATCH         | Accessed from a batch job.                        |
+   | ANONYMOUS     | Accessed without any authentication.              |
+   | AUTHENTICATED | Any authenticated user (opposite of ANONYMOUS).   |
+   | SERVICE       | Access from a system service.                     |
+   +---------------+---------------------------------------------------+   
+   struct fs_location4 {
+           utf8str_cis             server<>;
+           pathname4               rootpath;
+   };
+   struct fattr4 {
+           bitmap4         attrmask;
+           attrlist4       attr_vals;
+   };   
+   struct open_to_lock_owner4 {
+           seqid4          open_seqid;
+           stateid4        open_stateid;
+           seqid4          lock_seqid;
+           lock_owner4     lock_owner;
+   };   

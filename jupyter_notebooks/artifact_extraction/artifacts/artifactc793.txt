@@ -1,0 +1,475 @@
+
+                        +---------------------+
+                        |     higher-level    |
+                        +---------------------+
+                        |        TCP          |
+                        +---------------------+
+                        |  internet protocol  |
+                        +---------------------+
+                        |communication network|
+                        +---------------------+
+
+                                Figure 1
+
+##################################################################################
+
+                                    
+       +------+ +-----+ +-----+       +-----+                    
+       |Telnet| | FTP | |Voice|  ...  |     |  Application Level 
+       +------+ +-----+ +-----+       +-----+                    
+             |   |         |             |                       
+            +-----+     +-----+       +-----+                    
+            | TCP |     | RTP |  ...  |     |  Host Level        
+            +-----+     +-----+       +-----+                    
+               |           |             |                       
+            +-------------------------------+                    
+            |    Internet Protocol & ICMP   |  Gateway Level     
+            +-------------------------------+                    
+                           |                                     
+              +---------------------------+                      
+              |   Local Network Protocol  |    Network Level     
+              +---------------------------+                      
+
+                         Protocol Relationships
+
+                               Figure 2.
+
+##################################################################################
+
+                                    
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          Source Port          |       Destination Port        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        Sequence Number                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Acknowledgment Number                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Data |           |U|A|P|R|S|F|                               |
+   | Offset| Reserved  |R|C|S|S|Y|I|            Window             |
+   |       |           |G|K|H|T|N|N|                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           Checksum            |         Urgent Pointer        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+##################################################################################
+
+                     +--------+--------+--------+--------+
+                     |           Source Address          |
+                     +--------+--------+--------+--------+
+                     |         Destination Address       |
+                     +--------+--------+--------+--------+
+                     |  zero  |  PTCL  |    TCP Length   |
+                     +--------+--------+--------+--------+
+
+##################################################################################
+
+      Kind     Length    Meaning
+      ----     ------    -------
+       0         -       End of option list.
+       1         -       No-Operation.
+       2         4       Maximum Segment Size.
+      
+
+##################################################################################
+
+        +--------+
+        |00000000|
+        +--------+
+         Kind=0
+
+##################################################################################
+
+        +--------+
+        |00000001|
+        +--------+
+         Kind=1
+
+##################################################################################
+
+        +--------+--------+---------+--------+
+        |00000010|00000100|   max seg size   |
+        +--------+--------+---------+--------+
+         Kind=2   Length=4
+
+##################################################################################
+
+                   1         2          3          4      
+              ----------|----------|----------|---------- 
+                     SND.UNA    SND.NXT    SND.UNA        
+                                          +SND.WND        
+
+##################################################################################
+
+                       1          2          3      
+                   ----------|----------|---------- 
+                          RCV.NXT    RCV.NXT        
+                                    +RCV.WND        
+
+##################################################################################
+
+                                    
+                              +---------+ ---------\      active OPEN  
+                              |  CLOSED |            \    -----------  
+                              +---------+<---------\   \   create TCB  
+                                |     ^              \   \  snd SYN    
+                   passive OPEN |     |   CLOSE        \   \           
+                   ------------ |     | ----------       \   \         
+                    create TCB  |     | delete TCB         \   \       
+                                V     |                      \   \     
+                              +---------+            CLOSE    |    \   
+                              |  LISTEN |          ---------- |     |  
+                              +---------+          delete TCB |     |  
+                   rcv SYN      |     |     SEND              |     |  
+                  -----------   |     |    -------            |     V  
+ +---------+      snd SYN,ACK  /       \   snd SYN          +---------+
+ |         |<-----------------           ------------------>|         |
+ |   SYN   |                    rcv SYN                     |   SYN   |
+ |   RCVD  |<-----------------------------------------------|   SENT  |
+ |         |                    snd ACK                     |         |
+ |         |------------------           -------------------|         |
+ +---------+   rcv ACK of SYN  \       /  rcv SYN,ACK       +---------+
+   |           --------------   |     |   -----------                  
+   |                  x         |     |     snd ACK                    
+   |                            V     V                                
+   |  CLOSE                   +---------+                              
+   | -------                  |  ESTAB  |                              
+   | snd FIN                  +---------+                              
+   |                   CLOSE    |     |    rcv FIN                     
+   V                  -------   |     |    -------                     
+ +---------+          snd FIN  /       \   snd ACK          +---------+
+ |  FIN    |<-----------------           ------------------>|  CLOSE  |
+ | WAIT-1  |------------------                              |   WAIT  |
+ +---------+          rcv FIN  \                            +---------+
+   | rcv ACK of FIN   -------   |                            CLOSE  |  
+   | --------------   snd ACK   |                           ------- |  
+   V        x                   V                           snd FIN V  
+ +---------+                  +---------+                   +---------+
+ |FINWAIT-2|                  | CLOSING |                   | LAST-ACK|
+ +---------+                  +---------+                   +---------+
+   |                rcv ACK of FIN |                 rcv ACK of FIN |  
+   |  rcv FIN       -------------- |    Timeout=2MSL -------------- |  
+   |  -------              x       V    ------------        x       V  
+    \ snd ACK                 +---------+delete TCB         +---------+
+     ------------------------>|TIME WAIT|------------------>| CLOSED  |
+                              +---------+                   +---------+
+
+                      TCP Connection State Diagram
+                               Figure 6.
+
+##################################################################################
+
+    SEG.SEQ+SEG.LEN-1 = last sequence number of a segment
+
+  A new acknowledgment (called an "acceptable ack"), is one for which
+  the inequality below holds:
+
+    SND.UNA < SEG.ACK =< SND.NXT
+
+##################################################################################
+
+    SEG.SEQ+SEG.LEN-1 = last sequence number occupied by the incoming
+        segment
+
+  A segment is judged to occupy a portion of valid receive sequence
+  space if
+
+    RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+
+  or
+
+    RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
+
+##################################################################################
+
+    Segment Receive  Test
+    Length  Window
+    ------- -------  -------------------------------------------
+
+       0       0     SEG.SEQ = RCV.NXT
+
+       0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+
+      >0       0     not acceptable
+
+      >0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+                  or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
+
+##################################################################################
+
+    1) A --> B  SYN my sequence number is X
+    2) A <-- B  ACK your sequence number is X
+    3) A <-- B  SYN my sequence number is Y
+    4) A --> B  ACK your sequence number is Y
+
+##################################################################################
+
+  2.  SYN-SENT    --> <SEQ=100><CTL=SYN>               --> SYN-RECEIVED
+
+  3.  ESTABLISHED <-- <SEQ=300><ACK=101><CTL=SYN,ACK>  <-- SYN-RECEIVED
+
+  4.  ESTABLISHED --> <SEQ=101><ACK=301><CTL=ACK>       --> ESTABLISHED
+
+  5.  ESTABLISHED --> <SEQ=101><ACK=301><CTL=ACK><DATA> --> ESTABLISHED
+
+          Basic 3-Way Handshake for Connection Synchronization
+
+                                Figure 7.
+
+##################################################################################
+
+  2.  SYN-SENT     --> <SEQ=100><CTL=SYN>              ...
+
+  3.  SYN-RECEIVED <-- <SEQ=300><CTL=SYN>              <-- SYN-SENT
+
+  4.               ... <SEQ=100><CTL=SYN>              --> SYN-RECEIVED
+
+  5.  SYN-RECEIVED --> <SEQ=100><ACK=301><CTL=SYN,ACK> ...
+
+  6.  ESTABLISHED  <-- <SEQ=300><ACK=101><CTL=SYN,ACK> <-- SYN-RECEIVED
+
+  7.               ... <SEQ=101><ACK=301><CTL=ACK>     --> ESTABLISHED
+
+                Simultaneous Connection Synchronization
+
+                               Figure 8.
+
+##################################################################################
+
+  2.  SYN-SENT    --> <SEQ=100><CTL=SYN>               ...
+
+  3.  (duplicate) ... <SEQ=90><CTL=SYN>               --> SYN-RECEIVED
+
+  4.  SYN-SENT    <-- <SEQ=300><ACK=91><CTL=SYN,ACK>  <-- SYN-RECEIVED
+
+  5.  SYN-SENT    --> <SEQ=91><CTL=RST>               --> LISTEN
+  
+
+  6.              ... <SEQ=100><CTL=SYN>               --> SYN-RECEIVED
+
+  7.  SYN-SENT    <-- <SEQ=400><ACK=101><CTL=SYN,ACK>  <-- SYN-RECEIVED
+
+  8.  ESTABLISHED --> <SEQ=101><ACK=401><CTL=ACK>      --> ESTABLISHED
+
+                    Recovery from Old Duplicate SYN
+
+                               Figure 9.
+
+##################################################################################
+
+  3.  SYN-SENT --> <SEQ=400><CTL=SYN>              --> (??)
+
+  4.  (!!)     <-- <SEQ=300><ACK=100><CTL=ACK>     <-- ESTABLISHED
+
+  5.  SYN-SENT --> <SEQ=100><CTL=RST>              --> (Abort!!)
+
+  6.  SYN-SENT                                         CLOSED
+
+  7.  SYN-SENT --> <SEQ=400><CTL=SYN>              -->
+
+                     Half-Open Connection Discovery
+
+                               Figure 10.
+
+##################################################################################
+
+  2.  (??)    <-- <SEQ=300><ACK=100><DATA=10><CTL=ACK> <-- ESTABLISHED
+
+  3.          --> <SEQ=100><CTL=RST>                   --> (ABORT!!)
+
+           Active Side Causes Half-Open Connection Discovery
+
+                               Figure 11.
+
+##################################################################################
+
+  2.       ... <SEQ=Z><CTL=SYN>                -->  SYN-RECEIVED
+
+  3.  (??) <-- <SEQ=X><ACK=Z+1><CTL=SYN,ACK>   <--  SYN-RECEIVED
+
+  4.       --> <SEQ=Z+1><CTL=RST>              -->  (return to LISTEN!)
+
+##################################################################################
+
+  2.  (Close)
+      FIN-WAIT-1  --> <SEQ=100><ACK=300><CTL=FIN,ACK>  --> CLOSE-WAIT
+
+  3.  FIN-WAIT-2  <-- <SEQ=300><ACK=101><CTL=ACK>      <-- CLOSE-WAIT
+
+  4.                                                       (Close)
+      TIME-WAIT   <-- <SEQ=300><ACK=101><CTL=FIN,ACK>  <-- LAST-ACK
+
+  5.  TIME-WAIT   --> <SEQ=101><ACK=301><CTL=ACK>      --> CLOSED
+
+##################################################################################
+
+  2.  (Close)                                              (Close)
+      FIN-WAIT-1  --> <SEQ=100><ACK=300><CTL=FIN,ACK>  ... FIN-WAIT-1
+                  <-- <SEQ=300><ACK=100><CTL=FIN,ACK>  <--
+                  ... <SEQ=100><ACK=300><CTL=FIN,ACK>  -->
+
+  3.  CLOSING     --> <SEQ=101><ACK=301><CTL=ACK>      ... CLOSING
+                  <-- <SEQ=301><ACK=101><CTL=ACK>      <--
+                  ... <SEQ=101><ACK=301><CTL=ACK>      -->
+
+##################################################################################
+
+        SRTT = ( ALPHA * SRTT ) + ((1-ALPHA) * RTT)
+
+      and based on this, compute the retransmission timeout (RTO) as:
+
+        RTO = min[UBOUND,max[LBOUND,(BETA*SRTT)]]
+
+##################################################################################
+
+        Format:  OPEN (local port, foreign socket, active/passive
+        [, timeout] [, precedence] [, security/compartment] [, options])
+        -> local connection name
+
+##################################################################################
+
+        Format:  STATUS (local connection name) -> status data
+
+##################################################################################
+
+      Type of Service = Precedence: routine, Delay: normal, Throughput:
+      normal, Reliability: normal; or 00000000.
+
+      Time to Live    = one minute, or 00111100.
+
+##################################################################################
+
+  Please note in the following that all arithmetic on sequence numbers,
+  acknowledgment numbers, windows, et cetera, is modulo 2**32 the size
+  of the sequence number space.  Also note that "=<" means less than or
+  equal to (modulo 2**32).
+
+##################################################################################
+
+        <SEQ=SND.NXT><CTL=RST>
+
+##################################################################################
+
+      Return "state = LISTEN", and the TCB pointer.
+
+    SYN-SENT STATE
+
+      Return "state = SYN-SENT", and the TCB pointer.
+
+    SYN-RECEIVED STATE
+
+      Return "state = SYN-RECEIVED", and the TCB pointer.
+
+    ESTABLISHED STATE
+
+      Return "state = ESTABLISHED", and the TCB pointer.
+
+    FIN-WAIT-1 STATE
+
+      Return "state = FIN-WAIT-1", and the TCB pointer.
+
+    FIN-WAIT-2 STATE
+
+      Return "state = FIN-WAIT-2", and the TCB pointer.
+
+    CLOSE-WAIT STATE
+
+      Return "state = CLOSE-WAIT", and the TCB pointer.
+
+    CLOSING STATE
+
+      Return "state = CLOSING", and the TCB pointer.
+
+    LAST-ACK STATE
+
+      Return "state = LAST-ACK", and the TCB pointer.
+
+##################################################################################
+
+      Return "state = TIME-WAIT", and the TCB pointer.
+
+##################################################################################
+
+        <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+
+      If the ACK bit is on,
+
+        <SEQ=SEG.ACK><CTL=RST>
+
+##################################################################################
+
+          <SEQ=SEG.ACK><CTL=RST>
+
+##################################################################################
+
+          <SEQ=ISS><ACK=RCV.NXT><CTL=SYN,ACK>
+
+##################################################################################
+
+          If SEG.ACK =< ISS, or SEG.ACK > SND.NXT, send a reset (unless
+          the RST bit is set, if so drop the segment and return)
+
+            <SEQ=SEG.ACK><CTL=RST>
+
+          and discard the segment.  Return.
+
+          If SND.UNA =< SEG.ACK =< SND.NXT then the ACK is acceptable.
+
+##################################################################################
+
+            <SEQ=SEG.ACK><CTL=RST>
+
+          Otherwise
+
+            <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+
+##################################################################################
+
+            <SEQ=SEG.ACK><CTL=RST>
+
+##################################################################################
+
+            <SEQ=0><ACK=SEG.SEQ+SEG.LEN><CTL=RST,ACK>
+
+##################################################################################
+
+          <SEQ=SND.NXT><ACK=RCV.NXT><CTL=ACK>
+
+##################################################################################
+
+        Segment Receive  Test
+        Length  Window
+        ------- -------  -------------------------------------------
+
+           0       0     SEG.SEQ = RCV.NXT
+
+           0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+
+          >0       0     not acceptable
+
+          >0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+                      or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
+
+##################################################################################
+
+          If SND.UNA =< SEG.ACK =< SND.NXT then enter ESTABLISHED state
+          and continue processing.
+
+            If the segment acknowledgment is not acceptable, form a
+            reset segment,
+
+              <SEQ=SEG.ACK><CTL=RST>
+
+##################################################################################
+
+          If SND.UNA < SEG.ACK =< SND.NXT, the send window should be
+          updated.  If (SND.WL1 < SEG.SEQ or (SND.WL1 = SEG.SEQ and
+          SND.WL2 =< SEG.ACK)), set SND.WND <- SEG.WND, set
+          SND.WL1 <- SEG.SEQ, and set SND.WL2 <- SEG.ACK.
+
+##################################################################################

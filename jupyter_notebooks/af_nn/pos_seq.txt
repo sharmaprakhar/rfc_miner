@@ -1,0 +1,1785 @@
+   struct nfstime4 {
+           int64_t         seconds;
+           uint32_t        nseconds;
+   };
+
+   enum time_how4 {
+           SET_TO_SERVER_TIME4 = 0,
+           SET_TO_CLIENT_TIME4 = 1
+   };
+
+   union settime4 switch (time_how4 set_it) {
+    case SET_TO_CLIENT_TIME4:
+            nfstime4       time;
+    default:
+            void;
+   };
+
+   struct fs_locations4 {
+           pathname4       fs_root;
+           fs_location4    locations<>;
+   };
+
+   struct fattr4 {
+           bitmap4         attrmask;
+           attrlist4       attr_vals;
+   };
+
+   struct fs_location4 {
+           utf8str_cis             server<>;
+           pathname4               rootpath;
+   };
+
+   struct change_info4 {
+           bool            atomic;
+           changeid4       before;
+           changeid4       after;
+   };
+
+   struct clientaddr4 {
+           /* see struct rpcb in RFC 1833 */
+           string r_netid<>;    /* network id */
+           string r_addr<>;     /* universal address */
+   };
+
+   struct cb_client4 {
+           unsigned int    cb_program;
+           clientaddr4     cb_location;
+   };
+
+   struct open_owner4 {
+           clientid4       clientid;
+           opaque          owner<NFS4_OPAQUE_LIMIT>;
+   };
+
+   struct open_to_lock_owner4 {
+           seqid4          open_seqid;
+           stateid4        open_stateid;
+           seqid4          lock_seqid;
+           lock_owner4     lock_owner;
+   };
+
+                             +---------------------+
+                             | Client              |
+                             |                     |
+      +---(A) Token request--| Client -            |
+      |                      | Authorization       |
+      |   +-(B) Access token-> Server Interface    |
+      |   |                  |       (HTTPS)       |
+      |   |                  |_____________________|
+      |   |                  |                     |
+   +--v-------------+        |  Pub/Sub Interface  |
+   |  Authorization |        |     (MQTTS)         |
+   |  Server        |        +-----------^---------+
+   |________________|            |       |
+      |    ^             (C)Connection  (F)Connection
+      |    |               request +    response
+      |    |               access token  |
+      |    |                     |       |
+      |    |                 +---v--------------+
+      |    |                 |   Broker (MQTTS) |
+      |    |                 |__________________|
+      |    +(D)Introspection-|                  |
+      |   request (optional) | RS-AS interface  |
+      |                      |     (HTTPS)      |
+      +-(E)Introspection---->|__________________|
+        response (optional)
+
+                         Figure 1: Connection setup
+
+          0             8             16
+          +---------------------------+
+          |Protocol name length = 4B  |
+          +---------------------------+
+          |     'M'            'Q'    |
+          +---------------------------+
+          |     'T'            'T'    |
+          +---------------------------+
+          |Proto.level=5|Connect flags|
+          +---------------------------+
+          |        Keep alive         |
+          +---------------------------+
+          | CONNECT Properties Length |
+          |      (Upto  4 bytes)      |
+          +---------------------------+
+          | ( ..Other properties..)   |
+          +---------------------------+
+          |  Authentication Method    |
+          |      (0x15)  |   Len.     |
+          |      Len     |   'a'      |
+          |      'c'     |   'e'      |
+          +---------------------------+
+          |  Authentication Data      |
+          |     (0x16)   |    Len     |
+          |      Len     |   token    |
+          |  or token + PoP data      |
+          +---------------------------+
+
+       Figure 2: MQTT v5 CONNECT Variable Header with Authentication
+
+   +-----------------------------------------------------------+
+   |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
+   |   Flag  |Flag |           |        |         |Start|      |
+   +-----------------------------------------------------------+
+   | 0       | 0   |    X      |   X X  |   X     |  X  |  0   |
+   +-----------------------------------------------------------+
+
+                      Figure 3: CONNECT flags for AUTH
+
+   +-----------------------------------------------------------------+
+   |Authentication|Token Length|Token   |MAC or Signature            |
+   |Data Length   |            |        |(over TLS exporter content) |
+   +-----------------------------------------------------------------+
+
+    Figure 4: Authentication Data for PoP based on TLS exporter content
+
+   +------------------------------------+
+   |Authentication|Token Length|Token   |
+   |Data Length   |            |        |
+   +------------------------------------+
+
+     Figure 5: Authentication Data to Initiate PoP based on Challenge/
+                                  Response
+
+   +------------------------------+
+   |Authentication|Nonce (8 bytes)|
+   |Data Length   |               |
+   +------------------------------+
+
+             Figure 6: Authentication Data for Broker Challenge
+   
+   +------------------------------------------------------------------+
+   |Authentication|Client Nonce   |Client|MAC or Signature            |
+   |Data Length   |Length         |nonce |(over RS nonce+Client nonce)|
+   +------------------------------------------------------------------+
+
+        Figure 7: Authentication Data for Client Challenge Response
+
+                    Client      Broker
+                     |             |
+                     |<===========>| TLS connection setup
+                     |             |
+                     |             |
+                     +------------>| CONNECT with Authentication Data
+                     |             | contains only token
+                     |             |
+                     <-------------+ AUTH '0x18 (Cont. Authentication)'
+                     |             | 8-byte nonce as RS challenge
+                     |             |
+                     |------------>| AUTH '0x18 (Cont. Authentication)'
+                     |             | 8-byte client nonce + signature/MAC
+                     |             |
+                     |             |---+ Token validation
+                     |             |   | (may involve introspection)
+                     |             |<--+
+                     |             |
+                     |<------------+ CONNACK '0x00 (Success)'
+
+           Figure 8: PoP Challenge/Response Flow - Success
+
+          0             8             16
+          +---------------------------+
+          |Protocol name length = 4B  |
+          +---------------------------+
+          |     'M'            'Q'    |
+          +---------------------------+
+          |     'T'            'T'    |
+          +---------------------------+
+          |Proto.level=5|Connect flags|
+          +---------------------------+
+          |        Keep alive         |
+          +---------------------------+
+          |        Payload            |
+          |  Client Identifier        |
+          |  (UTF-8 encoded string)   |
+          |  Username as access token |
+          |   (UTF-8 endoded string)  |
+          | Password for signature/MAC|
+          |     (Binary Data)         |
+          +---------------------------+
+
+         Figure 11: MQTT CONNECT variable header using username and
+
+   +-----------------------------------------------------------+
+   |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
+   | flag    |flag |           |        |         |     |      |
+   +-----------------------------------------------------------+
+   | 1       | 1   |    X      |   X X  |   X     |  X   |  0  |
+   +-----------------------------------------------------------+
+
+              Figure 12: MQTT CONNECT flags.  (Rsvd=Reserved)
+
+   ====+=========+=====BROADCAST AREA=====+==========+=========+====
+       |         |                        |          |         |
+       |         |                        |          |         |
+    +--+--+   +--+--+                  +--+--+    +--+--+   +--+--+
+    |  B  |   |  B  |                  |  B  |    |  B  |   |  B  |
+    +-----+   +-----+                  +-----+    +-----+   +-----+
+
+   ====+=========+==========+=B'CAST AREA=+==========+=========+====
+       |         |          |             |          |         |
+       |         |          |             |          |         |
+    +--+--+   +--+--+    +--+--+       +--+--+    +--+--+   +--+--+
+    |  P  |   |  P  |    |NBNS |       |  P  |    |NBDD |   |  P  |
+    +-----+   +-----+    +-----+       +-----+    +-----+   +-----+
+
+                   +-----+
+                   |  P  |
+                   +--+--+              |    +-----+
+                      |                 |----+  P  |
+                      |                 |    +-----+
+                /-----+-----\           |
+   +-----+      |           |  +------+ |    +-----+
+   |  P  +------+  INTERNET +--+G'WAY |-+----+  P  |
+   +-----+      |           |  +------+ |    +-----+
+                /-----+-----/           |
+              /       |                 |    +-----+
+            /         |                 |----+  P  |
+     +-----+       +--+--+              |    +-----+
+     |NBNS +       |NBDD |
+     +-----+       +--+--+
+
+                         +-----+
+                         |  P  |
+                         +--+--+
+                            |
+                            |
+                      /-----+-----\
+         +-----+      |           |      +-----+
+         |  P  +------+  INTERNET +------+NBDD |
+         +-----+      |           |      +-----+
+                      /-----+-----/
+                    /       |
+                  /         |
+           +-----+       +--+--+
+           |NBNS +       |G'WAY|
+           +-----+       +--+--+
+                            |
+                            |
+   ====+=========+==========+=B'CAST AREA=+==========+=========+====
+       |         |          |             |          |         |
+       |         |          |             |          |         |
+    +--+--+   +--+--+    +--+--+       +--+--+    +--+--+   +--+--+
+    |  M  |   |  P  |    |  M  |       |  P  |    |  M  |   |  P  |
+    +-----+   +-----+    +--+--+       +-----+    +-----+   +-----+
+
+                         0 1 2 3 4 5 6 7
+                        +-+-+-+-+-+-+-+-+
+                        |a b c d|w x y z|          ORIGINAL BYTE
+                        +-+-+-+-+-+-+-+-+
+                            |       |
+                   +--------+       +--------+
+                   |                         |     SPLIT THE NIBBLES
+                   v                         v
+            0 1 2 3 4 5 6 7           0 1 2 3 4 5 6 7
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+           |0 0 0 0 a b c d|         |0 0 0 0 w x y z|
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+                   |                         |
+                   +                         +     ADD 'A'
+                   |                         |
+            0 1 2 3 4 5 6 7           0 1 2 3 4 5 6 7
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+           |0 1 0 0 0 0 0 1|         |0 1 0 0 0 0 0 1|
+           +-+-+-+-+-+-+-+-+         +-+-+-+-+-+-+-+-+
+
+   (BROADCAST) REGISTER                        (BROADCAST) REGISTER
+   ------------------->                        <-------------------
+        REGISTER                                     REGISTER
+   ------------------->                        <-------------------
+        REGISTER                         NEGATIVE RESPONSE
+   ------------------->             ------------------------------>
+          OVERWRITE
+   ------------------->               (NODE DOES NOT HAVE THE NAME)
+
+   
+         REGISTER                                      REGISTER
+   ------------------->                         <-------------------
+                                       QUERY
+    END-NODE CHALLENGE              <------------
+   <-------------------                QUERY
+                                    <------------
+             QUERY
+   ----------------------------->
+                                     POSITIVE RESP
+             QUERY                   ------------>
+   ----------------------------->                 NEGATIVE RESPONSE
+                                                  ----------------->
+         POSITIVE RESPONSE
+   <----------------------------
+
+      (BROADCAST) REGISTER                         (BROADCAST) REGISTER
+   ------------------->                         <-------------------
+        REGISTER                                     REGISTER
+   ------------------->                         <-------------------
+        REGISTER                        NEGATIVE RESPONSE
+   ------------------->             ------------------------------->
+
+                 !                     (NODE DOES NOT HAVE THE NAME)
+    INITIATE     !
+    A P-NODE     !
+    REGISTRATION !
+                 V
+
+        P-NODE                                 NBNS
+                       NAME QUERY REQUEST
+        /---------------------------------------->
+       /
+       !          (OPTIONAL)   WACK
+       !  <- - - - - - - - - - - - - - - - - - - -
+       !         !
+       !timer    !
+       !         ! (optional timer restart)
+       !         !
+        \        V           QUERY
+         \--------------------------------------->
+                              .
+                              .
+                              .
+                            QUERY
+        /---------------------------------------->
+       /
+       !          (OPTIONAL)   WACK
+       !  <- - - - - - - - - - - - - - - - - - - -
+       !         !
+       !timer    !
+       !         ! (optional timer restart)
+       !         !
+        \        V           QUERY
+         \--------------------------------------->
+                              .
+                              .
+                    POSITIVE RESPONSE
+         <-----------------------------------------
+
+   <-----Successful Refresh-----> <-----Unsuccessful Refresh---->
+   REFRESHING               NBNS   REFRESHING               NBNS
+   NODE                            NODE
+       NAME REFRESH REQUEST             NAME REFRESH REQUEST
+     ------------------------>        ----------------------->
+         POSITIVE RESPONSE                NEGATIVE RESPONSE
+     <------------------------        <-----------------------
+                                    !
+                                    !
+                                    V
+                              MARK NAME IN
+                                CONFLICT
+
+                        TCP CONNECT
+           ====================================>
+                        TCP ACCEPT
+           <===================================
+                     SESSION REQUEST
+           ------------------------------------>
+                    NEGATIVE RESPONSE
+           <-----------------------------------
+                        TCP CLOSE
+           <===================================
+                        TCP CLOSE
+           ====================================>
+
+                 Local Host                        |  Foreign
+                                                   |
+      +---------+                                  |
+     /         /|                                  |
+    +---------+ |             +----------+         |  +--------+
+    |         | |             |          |responses|  |        |
+    |         | |             |   Name   |---------|->|Foreign |
+    |  Master |-------------->|  Server  |         |  |Resolver|
+    |  files  | |             |          |<--------|--|        |
+    |         |/              |          | queries |  +--------+
+    +---------+               +----------+         |
+
+                 Local Host                        |  Foreign
+                                                   |
+    +---------+               +----------+         |  +--------+
+    |         | user queries  |          |queries  |  |        |
+    |  User   |-------------->|          |---------|->|Foreign |
+    | Program |               | Resolver |         |  |  Name  |
+    |         |<--------------|          |<--------|--| Server |
+    |         | user responses|          |responses|  |        |
+    +---------+               +----------+         |  +--------+
+                                |     A            |
+                cache additions |     | references |
+                                V     |            |
+                              +----------+         |
+                              |  cache   |         |
+                              +----------+         |
+
+                 Local Host                        |  Foreign
+                                                   |
+      +---------+                                  |
+     /         /|                                  |
+    +---------+ |             +----------+         |  +--------+
+    |         | |             |          |responses|  |        |
+    |         | |             |   Name   |---------|->|Foreign |
+    |  Master |-------------->|  Server  |         |  |Resolver|
+    |  files  | |             |          |<--------|--|        |
+    |         |/              |          | queries |  +--------+
+    +---------+               +----------+         |
+                                A     |maintenance |  +--------+
+                                |     +------------|->|        |
+                                |      queries     |  |Foreign |
+                                |                  |  |  Name  |
+                                +------------------|--| Server |
+                             maintenance responses |  +--------+
+
+                 Local Host                        |  Foreign
+                                                   |
+    +---------+               +----------+         |  +--------+
+    |         | user queries  |          |queries  |  |        |
+    |  User   |-------------->|          |---------|->|Foreign |
+    | Program |               | Resolver |         |  |  Name  |
+    |         |<--------------|          |<--------|--| Server |
+    |         | user responses|          |responses|  |        |
+    +---------+               +----------+         |  +--------+
+                                |     A            |
+                cache additions |     | references |
+                                V     |            |
+                              +----------+         |
+                              |  Shared  |         |
+                              | database |         |
+                              +----------+         |
+                                A     |            |
+      +---------+     refreshes |     | references |
+     /         /|               |     V            |
+    +---------+ |             +----------+         |  +--------+
+    |         | |             |          |responses|  |        |
+    |         | |             |   Name   |---------|->|Foreign |
+    |  Master |-------------->|  Server  |         |  |Resolver|
+    |  files  | |             |          |<--------|--|        |
+    |         |/              |          | queries |  +--------+
+    +---------+               +----------+         |
+                                A     |maintenance |  +--------+
+                                |     +------------|->|        |
+                                |      queries     |  |Foreign |
+                                |                  |  |  Name  |
+                                +------------------|--| Server |
+                             maintenance responses |  +--------+
+
+                   Local Hosts                     |  Foreign
+                                                   |
+    +---------+                                    |
+    |         | responses                          |
+    | Stub    |<--------------------+              |
+    | Resolver|                     |              |
+    |         |----------------+    |              |
+    +---------+ recursive      |    |              |
+                queries        |    |              |
+                               V    |              |
+    +---------+ recursive     +----------+         |  +--------+
+    |         | queries       |          |queries  |  |        |
+    | Stub    |-------------->| Recursive|---------|->|Foreign |
+    | Resolver|               | Server   |         |  |  Name  |
+    |         |<--------------|          |<--------|--| Server |
+    +---------+ responses     |          |responses|  |        |
+                              +----------+         |  +--------+
+                              |  Central |         |
+                              |   cache  |         |
+                              +----------+         |
+
+                                    1  1  1  1  1  1
+      0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                                               |
+    /                                               /
+    /                      NAME                     /
+    |                                               |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                      TYPE                     |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                     CLASS                     |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                      TTL                      |
+    |                                               |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                   RDLENGTH                    |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
+    /                     RDATA                     /
+    /                                               /
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |                    ADDRESS                    |
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    |       PROTOCOL        |                       |
+    +--+--+--+--+--+--+--+--+                       |
+    |                                               |
+    /                   <BIT MAP>                   /
+    /                                               /
+    +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    20 |           1           |           F           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    22 |           3           |           I           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    24 |           S           |           I           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    26 |           4           |           A           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    28 |           R           |           P           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    30 |           A           |           0           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    40 |           3           |           F           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    42 |           O           |           O           |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    44 | 1  1|                20                       |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    64 | 1  1|                26                       |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    92 |           0           |                       |
+       +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+                         +-----------------------------------------+
+           Header        |          OPCODE=IQUERY, ID=997          |
+                         +-----------------------------------------+
+          Question       |                 <empty>                 |
+                         +-----------------------------------------+
+           Answer        |        <anyname> A IN 10.1.0.52         |
+                         +-----------------------------------------+
+          Authority      |                 <empty>                 |
+                         +-----------------------------------------+
+         Additional      |                 <empty>                 |
+                         +-----------------------------------------+
+
+   +------+        +-----------+           +--------------+
+   |      | UP     |           | OPENED    |              | SUCCESS/NONE
+   | Dead |------->| Establish |---------->| Authenticate |--+
+   |      |        |           |           |              |  |
+   +------+        +-----------+           +--------------+  |
+      ^               |                        |             |
+      |          FAIL |                   FAIL |             |
+      +<--------------+             +----------+             |
+      |                             |                        |
+      |            +-----------+    |           +---------+  |
+      |       DOWN |           |    |   CLOSING |         |  |
+      +------------| Terminate |<---+<----------| Network |<-+
+                   |           |                |         |
+                   +-----------+                +---------+
+
+      | State
+      |    0         1         2         3         4         5
+Events| Initial   Starting  Closed    Stopped   Closing   Stopping
+------+-----------------------------------------------------------
+ Up   |    2     irc,scr/6     -         -         -         -
+ Down |    -         -         0       tls/1       0         1
+ Open |  tls/1       1     irc,scr/6     3r        5r        5r
+ Close|    0       tlf/0       2         2         4         4
+      |
+  TO+ |    -         -         -         -       str/4     str/5
+  TO- |    -         -         -         -       tlf/2     tlf/3
+      |
+ RCR+ |    -         -       sta/2 irc,scr,sca/8   4         5
+ RCR- |    -         -       sta/2 irc,scr,scn/6   4         5
+ RCA  |    -         -       sta/2     sta/3       4         5
+ RCN  |    -         -       sta/2     sta/3       4         5
+      |
+ RTR  |    -         -       sta/2     sta/3     sta/4     sta/5
+ RTA  |    -         -         2         3       tlf/2     tlf/3
+      |
+ RUC  |    -         -       scj/2     scj/3     scj/4     scj/5
+ RXJ+ |    -         -         2         3         4         5
+ RXJ- |    -         -       tlf/2     tlf/3     tlf/2     tlf/3
+      |
+ RXR  |    -         -         2         3         4         5
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    Data ...
+   +-+-+-+-+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Rejected-Packet ...
+   +-+-+-+-+-+-+-+-+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       Rejected-Protocol       |      Rejected-Information ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    0                   1
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |          Magic-Number
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         Magic-Number (cont)       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+   +---------------+---------------+---------------+---------------+
+   |                            xid (4)                            |
+   +-------------------------------+-------------------------------+
+   |           secs (2)            |           flags (2)           |
+   +-------------------------------+-------------------------------+
+   |                          ciaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          yiaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          siaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          giaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          chaddr  (16)                         |
+   |                                                               |
+   |                                                               |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          sname   (64)                         |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          file    (128)                        |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          options (variable)                   |
+   +---------------------------------------------------------------+
+
+                  Figure 1:  Format of a DHCP message
+
+                  v               v               v
+                  |               |               |
+                  |     Begins initialization     |
+                  |               |               |
+                  | _____________/|\____________  |
+                  |/DHCPDISCOVER | DHCPDISCOVER  \|
+                  |               |               |
+              Determines          |          Determines
+             configuration        |         configuration
+                  |               |               |
+                  |\             |  ____________/ |
+                  | \________    | /DHCPOFFER     |
+                  | DHCPOFFER\   |/               |
+                  |           \  |                |
+                  |       Collects replies        |
+                  |             \|                |
+                  |     Selects configuration     |
+                  |               |               |
+                  | _____________/|\____________  |
+                  |/ DHCPREQUEST  |  DHCPREQUEST\ |
+                  |               |               |
+                  |               |     Commits configuration
+                  |               |               |
+                  |               | _____________/|
+                  |               |/ DHCPACK      |
+                  |               |               |
+                  |    Initialization complete    |
+                  |               |               |
+                  .               .               .
+                  .               .               .
+                  |               |               |
+                  |      Graceful shutdown        |
+                  |               |               |
+                  |               |\ ____________ |
+                  |               | DHCPRELEASE  \|
+                  |               |               |
+                  |               |        Discards lease
+                  |               |               |
+                  v               v               v
+     Figure 3: Timeline diagram of messages exchanged between DHCP
+               client and servers when allocating a new network address
+
+                  v               v               v
+                  |                |               |
+                  |              Begins            |
+                  |          initialization        |
+                  |                |               |
+                  |                /|\             |
+                  |   _________ __/ | \__________  |
+                  | /DHCPREQU EST  |  DHCPREQUEST\ |
+                  |/               |              \|
+                  |                |               |
+               Locates             |            Locates
+            configuration          |         configuration
+                  |                |               |
+                  |\               |              /|
+                  | \              |  ___________/ |
+                  |  \             | /  DHCPACK    |
+                  |   \ _______    |/              |
+                  |     DHCPACK\   |               |
+                  |          Initialization        |
+                  |             complete           |
+                  |               \|               |
+                  |                |               |
+                  |           (Subsequent          |
+                  |             DHCPACKS           |
+                  |             ignored)           |
+                  |                |               |
+                  |                |               |
+                  v                v               v
+
+     Figure 4: Timeline diagram of messages exchanged between DHCP
+
+Option                    DHCPOFFER    DHCPACK            DHCPNAK
+------                    ---------    -------            -------
+Requested IP address      MUST NOT     MUST NOT           MUST NOT
+IP address lease time     MUST         MUST (DHCPREQUEST) MUST NOT
+                                       MUST NOT (DHCPINFORM)
+Use 'file'/'sname' fields MAY          MAY                MUST NOT
+DHCP message type         DHCPOFFER    DHCPACK            DHCPNAK
+Parameter request list    MUST NOT     MUST NOT           MUST NOT
+Message                   SHOULD       SHOULD             SHOULD
+Client identifier         MUST NOT     MUST NOT           MAY
+Vendor class identifier   MAY          MAY                MAY
+Server identifier         MUST         MUST               MUST
+Maximum message size      MUST NOT     MUST NOT           MUST NOT
+All others                MAY          MAY                MUST NOT
+
+   ---------------------------------------------------------------------
+   |              |INIT-REBOOT  |SELECTING    |RENEWING     |REBINDING |
+   ---------------------------------------------------------------------
+   |broad/unicast |broadcast    |broadcast    |unicast      |broadcast |
+   |server-ip     |MUST NOT     |MUST         |MUST NOT     |MUST NOT  |
+   |requested-ip  |MUST         |MUST         |MUST NOT     |MUST NOT  |
+   |ciaddr        |zero         |zero         |IP address   |IP address|
+   ---------------------------------------------------------------------
+
+ --------                               -------
+|        | +-------------------------->|       |<-------------------+
+| INIT-  | |     +-------------------->| INIT  |                    |
+| REBOOT |DHCPNAK/         +---------->|       |<---+               |
+|        |Restart|         |            -------     |               |
+ --------  |  DHCPNAK/     |               |                        |
+    |      Discard offer   |      -/Send DHCPDISCOVER               |
+-/Send DHCPREQUEST         |               |                        |
+    |      |     |      DHCPACK            v        |               |
+ -----------     |   (not accept.)/   -----------   |               |
+|           |    |  Send DHCPDECLINE |           |                  |
+| REBOOTING |    |         |         | SELECTING |<----+            |
+|           |    |        /          |           |     |DHCPOFFER/  |
+ -----------     |       /            -----------   |  |Collect     |
+    |            |      /                  |   |       |  replies   |
+DHCPACK/         |     /  +----------------+   +-------+            |
+Record lease, set|    |   v   Select offer/                         |
+timers T1, T2   ------------  send DHCPREQUEST      |               |
+    |   +----->|            |             DHCPNAK, Lease expired/   |
+    |   |      | REQUESTING |                  Halt network         |
+    DHCPOFFER/ |            |                       |               |
+    Discard     ------------                        |               |
+    |   |        |        |                   -----------           |
+    |   +--------+     DHCPACK/              |           |          |
+    |              Record lease, set    -----| REBINDING |          |
+    |                timers T1, T2     /     |           |          |
+    |                     |        DHCPACK/   -----------           |
+    |                     v     Record lease, set   ^               |
+    +----------------> -------      /timers T1,T2   |               |
+               +----->|       |<---+                |               |
+               |      | BOUND |<---+                |               |
+  DHCPOFFER, DHCPACK, |       |    |            T2 expires/   DHCPNAK/
+   DHCPNAK/Discard     -------     |             Broadcast  Halt network
+               |       | |         |            DHCPREQUEST         |
+               +-------+ |        DHCPACK/          |               |
+                    T1 expires/   Record lease, set |               |
+                 Send DHCPREQUEST timers T1, T2     |               |
+                 to leasing server |                |               |
+                         |   ----------             |               |
+                         |  |          |------------+               |
+                         +->| RENEWING |                            |
+                            |          |----------------------------+
+                             ----------
+          Figure 5:  State-transition diagram for DHCP clients
+
+Field      DHCPDISCOVER          DHCPREQUEST           DHCPDECLINE,
+           DHCPINFORM                                  DHCPRELEASE
+-----      ------------          -----------           -----------
+'op'       BOOTREQUEST           BOOTREQUEST           BOOTREQUEST
+'htype'    (From "Assigned Numbers" RFC)
+'hlen'     (Hardware address length in octets)
+'hops'     0                     0                     0
+'xid'      selected by client    'xid' from server     selected by
+                                 DHCPOFFER message     client
+'secs'     0 or seconds since    0 or seconds since    0
+           DHCP process started  DHCP process started
+'flags'    Set 'BROADCAST'       Set 'BROADCAST'       0
+           flag if client        flag if client
+           requires broadcast    requires broadcast
+           reply                 reply
+'ciaddr'   0 (DHCPDISCOVER)      0 or client's         0 (DHCPDECLINE)
+           client's              network address       client's network
+           network address       (BOUND/RENEW/REBIND)  address
+           (DHCPINFORM)                                (DHCPRELEASE)
+'yiaddr'   0                     0                     0
+'siaddr'   0                     0                     0
+'giaddr'   0                     0                     0
+'chaddr'   client's hardware     client's hardware     client's hardware
+           address               address               address
+'sname'    options, if           options, if           (unused)
+           indicated in          indicated in
+           'sname/file'          'sname/file'
+           option; otherwise     option; otherwise
+           unused                unused
+'file'     options, if           options, if           (unused)
+           indicated in          indicated in
+           'sname/file'          'sname/file'
+           option; otherwise     option; otherwise
+           unused                unused
+'options'  options               options               (unused)
+
+Option                     DHCPDISCOVER  DHCPREQUEST      DHCPDECLINE,
+                           DHCPINFORM                     DHCPRELEASE
+------                     ------------  -----------      -----------
+Requested IP address       MAY           MUST (in         MUST
+                           (DISCOVER)    SELECTING or     (DHCPDECLINE),
+                           MUST NOT      INIT-REBOOT)     MUST NOT
+                           (INFORM)      MUST NOT (in     (DHCPRELEASE)
+                                         BOUND or
+                                         RENEWING)
+IP address lease time      MAY           MAY              MUST NOT
+                           (DISCOVER)
+                           MUST NOT
+                           (INFORM)
+Use 'file'/'sname' fields  MAY           MAY              MAY
+DHCP message type          DHCPDISCOVER/ DHCPREQUEST      DHCPDECLINE/
+                           DHCPINFORM                     DHCPRELEASE
+Client identifier          MAY           MAY              MAY
+Vendor class identifier    MAY           MAY              MUST NOT
+Server identifier          MUST NOT      MUST (after      MUST
+                                         SELECTING)
+                                         MUST NOT (after
+                                         INIT-REBOOT,
+                                         BOUND, RENEWING
+                                         or REBINDING)
+Parameter request list     MAY           MAY              MUST NOT
+Maximum message size       MAY           MAY              MUST NOT
+Message                    SHOULD NOT    SHOULD NOT       SHOULD
+Site-specific              MAY           MAY              MUST NOT
+All others                 MAY           MAY              MUST NOT
+
+   +---------------+------------------------
+   |  IPv6 header  | TCP header + data
+   |               |
+   | Next Header = |
+   |      TCP      |
+   +---------------+------------------------
+
+
+   +---------------+----------------+------------------------
+   |  IPv6 header  | Routing header | TCP header + data
+   |               |                |
+   | Next Header = |  Next Header = |
+   |    Routing    |      TCP       |
+   +---------------+----------------+------------------------
+
+
+   +---------------+----------------+-----------------+-----------------
+   |  IPv6 header  | Routing header | Fragment header | fragment of TCP
+   |               |                |                 |  header + data
+   | Next Header = |  Next Header = |  Next Header =  |
+   |    Routing    |    Fragment    |       TCP       |
+   +---------------+----------------+-----------------+-----------------
+
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- - - - - - - - -
+      |  Option Type  |  Opt Data Len |  Option Data
+      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- - - - - - - - -
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Next Header  |  Hdr Ext Len  |  Routing Type | Segments Left |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    .                                                               .
+    .                       type-specific data                      .
+    .                                                               .
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |  Next Header  |  Hdr Ext Len  | Routing Type=0| Segments Left |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                            Reserved                           |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +                           Address[1]                          +
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +                           Address[2]                          +
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    .                               .                               .
+    .                               .                               .
+    .                               .                               .
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +                           Address[n]                          +
+    |                                                               |
+    +                                                               +
+    |                                                               |
+    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   +------------------+--------------+--------------+--//--+----------+
+   |  Unfragmentable  |    first     |    second    |      |   last   |
+   |       Part       |   fragment   |   fragment   | .... | fragment |
+   +------------------+--------------+--------------+--//--+----------+
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Next Header  | Hdr Ext Len=1 | Pad1 Option=0 | Option Type=Y |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opt Data Len=7 | 1-octet field |         2-octet field         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         4-octet field                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | PadN Option=1 |Opt Data Len=2 |       0       |       0       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Next Header  | Hdr Ext Len=3 | Option Type=X |Opt Data Len=12|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         4-octet field                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   +                         8-octet field                         +
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | PadN Option=1 |Opt Data Len=1 |       0       | Option Type=Y |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opt Data Len=7 | 1-octet field |         2-octet field         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         4-octet field                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | PadN Option=1 |Opt Data Len=2 |       0       |       0       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Next Header  | Hdr Ext Len=3 | Pad1 Option=0 | Option Type=Y |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Opt Data Len=7 | 1-octet field |         2-octet field         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         4-octet field                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | PadN Option=1 |Opt Data Len=4 |       0       |       0       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       0       |       0       | Option Type=X |Opt Data Len=12|
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         4-octet field                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                                                               |
+   +                         8-octet field                         +
+   |                                                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   +-------------------+--------------------------+--------------------+
+   | Label             | Meaning                  | Definition         |
+   +-------------------+--------------------------+--------------------+
+   | AUTHINFO          | Authentication           | [NNTP-AUTH]        |
+   |                   |                          |                    |
+   | HDR               | Batched header retrieval | Section 3.3.2,     |
+   |                   |                          | Section 8.5, and   |
+   |                   |                          | Section 8.6        |
+   |                   |                          |                    |
+   | IHAVE             | IHAVE command available  | Section 3.3.2 and  |
+   |                   |                          | Section 6.3.2      |
+   |                   |                          |                    |
+   | IMPLEMENTATION    | Server                   | Section 3.3.2      |
+   |                   | implementation-specific  |                    |
+   |                   | information              |                    |
+   |                   |                          |                    |
+   | LIST              | LIST command variants    | Section 3.3.2 and  |
+   |                   |                          | Section 7.6.1      |
+   |                   |                          |                    |
+   | MODE-READER       | Mode-switching server    | Section 3.4.2      |
+   |                   | and MODE READER command  |                    |
+   |                   | available                |                    |
+   |                   |                          |                    |
+   | NEWNEWS           | NEWNEWS command          | Section 3.3.2 and  |
+   |                   | available                | Section 7.4        |
+   |                   |                          |                    |
+   | OVER              | Overview support         | Section 3.3.2,     |
+   |                   |                          | Section 8.3, and   |
+   |                   |                          | Section 8.4        |
+   |                   |                          |                    |
+   | POST              | POST command available   | Section 3.3.2 and  |
+   |                   |                          | Section 6.3.1      |
+   |                   |                          |                    |
+   | READER            | Reader commands          | Section 3.3.2      |
+   |                   | available                |                    |
+   |                   |                          |                    |
+   | SASL              | Supported SASL           | [NNTP-AUTH]        |
+   |                   | mechanisms               |                    |
+   |                   |                          |                    |
+   | STARTTLS          | Transport layer security | [NNTP-TLS]         |
+   |                   |                          |                    |
+   | STREAMING         | Streaming feeds          | [NNTP-STREAM]      |
+   |                   |                          |                    |
+   | VERSION           | Supported NNTP versions  | Section 3.3.2      |
+   +-------------------+--------------------------+--------------------+
+
+      [C] GROUP misc.test
+      [S] 211 1234 3000234 3002322 misc.test
+      [C] ARTICLE
+      [S] 220 3000234 <45223423@example.com>
+      [S] Path: pathost!demo!whitehouse!not-for-mail
+      [S] From: "Demo User" <nobody@example.net>
+      [S] Newsgroups: misc.test
+      [S] Subject: I am just a test article
+      [S] Date: 6 Oct 1998 04:38:40 -0500
+      [S] Organization: An Example Net, Uncertain, Texas
+      [S] Message-ID: <45223423@example.com>
+      [S]
+      [S] This is just a test article.
+      [S] .
+
+      [C] ARTICLE <45223423@example.com>
+      [S] 220 0 <45223423@example.com>
+      [S] Path: pathost!demo!whitehouse!not-for-mail
+      [S] From: "Demo User" <nobody@example.net>
+      [S] Newsgroups: misc.test
+      [S] Subject: I am just a test article
+      [S] Date: 6 Oct 1998 04:38:40 -0500
+      [S] Organization: An Example Net, Uncertain, Texas
+      [S] Message-ID: <45223423@example.com>
+      [S]
+      [S] This is just a test article.
+      [S] .
+
+      [C] GROUP misc.test
+      [S] 211 1234 3000234 3002322 misc.test
+      [C] HEAD
+      [S] 221 3000234 <45223423@example.com>
+      [S] Path: pathost!demo!whitehouse!not-for-mail
+      [S] From: "Demo User" <nobody@example.net>
+      [S] Newsgroups: misc.test
+      [S] Subject: I am just a test article
+      [S] Date: 6 Oct 1998 04:38:40 -0500
+      [S] Organization: An Example Net, Uncertain, Texas
+      [S] Message-ID: <45223423@example.com>
+      [S] .
+
+      [C] HEAD <45223423@example.com>
+      [S] 221 0 <45223423@example.com>
+      [S] Path: pathost!demo!whitehouse!not-for-mail
+      [S] From: "Demo User" <nobody@example.net>
+      [S] Newsgroups: misc.test
+      [S] Subject: I am just a test article
+      [S] Date: 6 Oct 1998 04:38:40 -0500
+      [S] Organization: An Example Net, Uncertain, Texas
+      [S] Message-ID: <45223423@example.com>
+      [S] .
+
+      [C] IHAVE <i.am.an.article.you.will.want@example.com>
+      [S] 335 Send it; end with <CR-LF>.<CR-LF>
+      [C] Path: pathost!demo!somewhere!not-for-mail
+      [C] From: "Demo User" <nobody@example.com>
+      [C] Newsgroups: misc.test
+      [C] Subject: I am just a test article
+      [C] Date: 6 Oct 1998 04:38:40 -0500
+      [C] Organization: An Example Com, San Jose, CA
+      [C] Message-ID: <i.am.an.article.you.have@example.com>
+      [C]
+      [C] This is just a test article.
+      [C] .
+      [S] 437 Article rejected; don't send again
+
+   +--------------+---------------+------------------------------------+
+   | Keyword      | Definition    | Status                             |
+   +--------------+---------------+------------------------------------+
+   | ACTIVE       | Section 7.6.3 | Mandatory if the READER capability |
+   |              |               | is advertised                      |
+   |              |               |                                    |
+   | ACTIVE.TIMES | Section 7.6.4 | Optional                           |
+   |              |               |                                    |
+   | DISTRIB.PATS | Section 7.6.5 | Optional                           |
+   |              |               |                                    |
+   | HEADERS      | Section 8.6   | Mandatory if the HDR capability is |
+   |              |               | advertised                         |
+   |              |               |                                    |
+   | NEWSGROUPS   | Section 7.6.6 | Mandatory if the READER capability |
+   |              |               | is advertised                      |
+   |              |               |                                    |
+   | OVERVIEW.FMT | Section 8.4   | Mandatory if the OVER capability   |
+   |              |               | is advertised                      |
+   +--------------+---------------+------------------------------------+
+
+       +-------------------+-----------------------+---------------+
+       | Command           | Indicating capability | Definition    |
+       +-------------------+-----------------------+---------------+
+       | CAPABILITIES      | mandatory             | Section 5.2   |
+       | HEAD              | mandatory             | Section 6.2.2 |
+       | HELP              | mandatory             | Section 7.2   |
+       | QUIT              | mandatory             | Section 5.4   |
+       | STAT              | mandatory             | Section 6.2.4 |
+       | HDR               | HDR                   | Section 8.5   |
+       | LIST HEADERS      | HDR                   | Section 8.6   |
+       | IHAVE             | IHAVE                 | Section 6.3.2 |
+       | LIST              | LIST                  | Section 7.6.1 |
+       | LIST ACTIVE       | LIST                  | Section 7.6.3 |
+       | LIST ACTIVE.TIMES | LIST                  | Section 7.6.4 |
+       | LIST DISTRIB.PATS | LIST                  | Section 7.6.5 |
+       | LIST NEWSGROUPS   | LIST                  | Section 7.6.6 |
+       | MODE READER       | MODE-READER           | Section 5.3   |
+       | NEWNEWS           | NEWNEWS               | Section 7.4   |
+       | OVER              | OVER                  | Section 8.3   |
+       | LIST OVERVIEW.FMT | OVER                  | Section 8.4   |
+       | POST              | POST                  | Section 6.3.1 |
+       | ARTICLE           | READER                | Section 6.2.1 |
+       | BODY              | READER                | Section 6.2.3 |
+       | DATE              | READER                | Section 7.1   |
+       | GROUP             | READER                | Section 6.1.1 |
+       | LAST              | READER                | Section 6.1.3 |
+       | LISTGROUP         | READER                | Section 6.1.2 |
+       | NEWGROUPS         | READER                | Section 7.3   |
+       | NEXT              | READER                | Section 6.1.4 |
+       +-------------------+-----------------------+---------------+
+                   o--------------------------------o
+                   |                                |
+                   | +-------------+   +----------+ |
+                   | | Application |   |  Service | |
+                   | +-------------+   +----------+ |
+                   |       Application Plane        |
+                   o---------------Y----------------o
+                                   |
+     *-----------------------------Y---------------------------------*
+     |           Network Services Abstraction Layer (NSAL)           |
+     *------Y------------------------------------------------Y-------*
+            |                                                |
+            |               Service Interface                |
+            |                                                |
+     o------Y------------------o       o---------------------Y------o
+     |      |    Control Plane |       | Management Plane    |      |
+     | +----Y----+   +-----+   |       |  +-----+       +----Y----+ |
+     | | Service |   | App |   |       |  | App |       | Service | |
+     | +----Y----+   +--Y--+   |       |  +--Y--+       +----Y----+ |
+     |      |           |      |       |     |               |      |
+     | *----Y-----------Y----* |       | *---Y---------------Y----* |
+     | | Control Abstraction | |       | | Management Abstraction | |
+     | |     Layer (CAL)     | |       | |      Layer (MAL)       | |
+     | *----------Y----------* |       | *----------Y-------------* |
+     |            |            |       |            |               |
+     o------------|------------o       o------------|---------------o
+                  |                                 |
+                  | CP                              | MP
+                  | Southbound                      | Southbound
+                  | Interface                       | Interface
+                  |                                 |
+     *------------Y---------------------------------Y----------------*
+     |         Device and resource Abstraction Layer (DAL)           |
+     *------------Y---------------------------------Y----------------*
+     |            |                                 |                |
+     |    o-------Y----------o   +-----+   o--------Y----------o     |
+     |    | Forwarding Plane |   | App |   | Operational Plane |     |
+     |    o------------------o   +-----+   o-------------------o     |
+     |                       Network Device                          |
+     +---------------------------------------------------------------+
+
+                     Figure 1: SDN Layer Architecture
+
+   +-----------------+-------------------------------------------------+
+   | Data Type       | Definition                                      |
+   +-----------------+-------------------------------------------------+
+   | int32_t         | typedef int int32_t;                            |
+   |                 |                                                 |
+   | uint32_t        | typedef unsigned int uint32_t;                  |
+   |                 |                                                 |
+   | int64_t         | typedef hyper int64_t;                          |
+   |                 |                                                 |
+   | uint64_t        | typedef unsigned hyper uint64_t;                |
+   |                 |                                                 |
+   | attrlist4       | typedef opaque attrlist4<>;                     |
+   |                 |                                                 |
+   |                 | Used for file/directory attributes.             |
+   |                 |                                                 |
+   | bitmap4         | typedef uint32_t bitmap4<>;                     |
+   |                 |                                                 |
+   |                 | Used in attribute array encoding.               |
+   |                 |                                                 |
+   | changeid4       | typedef uint64_t changeid4;                     |
+   |                 |                                                 |
+   |                 | Used in the definition of change_info4.         |
+   |                 |                                                 |
+   | clientid4       | typedef uint64_t clientid4;                     |
+   |                 |                                                 |
+   |                 | Shorthand reference to client identification.   |
+   |                 |                                                 |
+   | count4          | typedef uint32_t count4;                        |
+   |                 |                                                 |
+   |                 | Various count parameters (READ, WRITE, COMMIT). |
+   |                 |                                                 |
+   | length4         | typedef uint64_t length4;                       |
+   |                 |                                                 |
+   |                 | Describes LOCK lengths.                         |
+   |                 |                                                 |
+
+   | mode4           | typedef uint32_t mode4;                         |
+   |                 |                                                 |
+   |                 | Mode attribute data type.                       |
+   |                 |                                                 |
+   | nfs_cookie4     | typedef uint64_t nfs_cookie4;                   |
+   |                 |                                                 |
+   |                 | Opaque cookie value for READDIR.                |
+   |                 |                                                 |
+   | nfs_fh4         | typedef opaque nfs_fh4<NFS4_FHSIZE>;            |
+   |                 |                                                 |
+   |                 | Filehandle definition.                          |
+   |                 |                                                 |
+   | nfs_ftype4      | enum nfs_ftype4;                                |
+   |                 |                                                 |
+   |                 | Various defined file types.                     |
+   |                 |                                                 |
+   | nfsstat4        | enum nfsstat4;                                  |
+   |                 |                                                 |
+   |                 | Return value for operations.                    |
+   |                 |                                                 |
+   | nfs_lease4      | typedef uint32_t nfs_lease4;                    |
+   |                 |                                                 |
+   |                 | Duration of a lease in seconds.                 |
+   |                 |                                                 |
+   | offset4         | typedef uint64_t offset4;                       |
+   |                 |                                                 |
+   |                 | Various offset designations (READ, WRITE, LOCK, |
+   |                 | COMMIT).                                        |
+   |                 |                                                 |
+   | qop4            | typedef uint32_t qop4;                          |
+   |                 |                                                 |
+   |                 | Quality of protection designation in SECINFO.   |
+   |                 |                                                 |
+   | sec_oid4        | typedef opaque sec_oid4<>;                      |
+   |                 |                                                 |
+   |                 | Security Object Identifier.  The sec_oid4 data  |
+   |                 | type is not really opaque.  Instead, it         |
+   |                 | contains an ASN.1 OBJECT IDENTIFIER as used by  |
+   |                 | GSS-API in the mech_type argument to            |
+   |                 | GSS_Init_sec_context.  See [RFC2743] for        |
+   |                 | details.                                        |
+   |                 |                                                 |
+   | seqid4          | typedef uint32_t seqid4;                        |
+   |                 |                                                 |
+   |                 | Sequence identifier used for file locking.      |
+   |                 |                                                 |
+
+   | utf8string      | typedef opaque utf8string<>;                    |
+   |                 |                                                 |
+   |                 | UTF-8 encoding for strings.                     |
+   |                 |                                                 |
+   | utf8str_cis     | typedef utf8string utf8str_cis;                 |
+   |                 |                                                 |
+   |                 | Case-insensitive UTF-8 string.                  |
+   |                 |                                                 |
+   | utf8str_cs      | typedef utf8string utf8str_cs;                  |
+   |                 |                                                 |
+   |                 | Case-sensitive UTF-8 string.                    |
+   |                 |                                                 |
+   | utf8str_mixed   | typedef utf8string utf8str_mixed;               |
+   |                 |                                                 |
+   |                 | UTF-8 strings with a case-sensitive prefix and  |
+   |                 | a case-insensitive suffix.                      |
+   |                 |                                                 |
+   | component4      | typedef utf8str_cs component4;                  |
+   |                 |                                                 |
+   |                 | Represents pathname components.                 |
+   |                 |                                                 |
+   | linktext4       | typedef opaque linktext4<>;                     |
+   |                 |                                                 |
+   |                 | Symbolic link contents ("symbolic link" is      |
+   |                 | defined in an Open Group [openg_symlink]        |
+   |                 | standard).                                      |
+   |                 |                                                 |
+   | ascii_REQUIRED4 | typedef utf8string ascii_REQUIRED4;             |
+   |                 |                                                 |
+   |                 | String is sent as ASCII and thus is             |
+   |                 | automatically UTF-8.                            |
+   |                 |                                                 |
+   | pathname4       | typedef component4 pathname4<>;                 |
+   |                 |                                                 |
+   |                 | Represents pathname for fs_locations.           |
+   |                 |                                                 |
+   | nfs_lockid4     | typedef uint64_t nfs_lockid4;                   |
+   |                 |                                                 |
+   | verifier4       | typedef opaque verifier4[NFS4_VERIFIER_SIZE];   |
+   |                 |                                                 |
+   |                 | Verifier used for various operations (COMMIT,   |
+   |                 | CREATE, OPEN, READDIR, WRITE)                   |
+   |                 | NFS4_VERIFIER_SIZE is defined as 8.             |
+   +-----------------+-------------------------------------------------+
+
+     +--------+-------+----------------------+-----------------------+
+     | Number | Name  | Mechanism's OID      | RPCSEC_GSS service    |
+     +--------+-------+----------------------+-----------------------+
+     | 390003 | krb5  | 1.2.840.113554.1.2.2 | rpc_gss_svc_none      |
+     | 390004 | krb5i | 1.2.840.113554.1.2.2 | rpc_gss_svc_integrity |
+     | 390005 | krb5p | 1.2.840.113554.1.2.2 | rpc_gss_svc_privacy   |
+     +--------+-------+----------------------+-----------------------+
+
+      +-----------------+----+------------+-----+-------------------+
+      | Name            | ID | Data Type  | Acc | Defined in        |
+      +-----------------+----+------------+-----+-------------------+
+      | supported_attrs | 0  | bitmap4    | R   | Section 5.8.1.1   |
+      | type            | 1  | nfs_ftype4 | R   | Section 5.8.1.2   |
+      | fh_expire_type  | 2  | uint32_t   | R   | Section 5.8.1.3   |
+      | change          | 3  | changeid4  | R   | Section 5.8.1.4   |
+      | size            | 4  | uint64_t   | R W | Section 5.8.1.5   |
+      | link_support    | 5  | bool       | R   | Section 5.8.1.6   |
+      | symlink_support | 6  | bool       | R   | Section 5.8.1.7   |
+      | named_attr      | 7  | bool       | R   | Section 5.8.1.8   |
+      | fsid            | 8  | fsid4      | R   | Section 5.8.1.9   |
+      | unique_handles  | 9  | bool       | R   | Section 5.8.1.10  |
+      | lease_time      | 10 | nfs_lease4 | R   | Section 5.8.1.11  |
+      | rdattr_error    | 11 | nfsstat4   | R   | Section 5.8.1.12  |
+      | filehandle      | 19 | nfs_fh4    | R   | Section 5.8.1.13  |
+      +-----------------+----+------------+-----+-------------------+
+
+   +------------------------------+--------------+---------------------+
+   | Value                        | Abbreviation | Description         |
+   +------------------------------+--------------+---------------------+
+   | ACE4_ACCESS_ALLOWED_ACE_TYPE | ALLOW        | Explicitly grants   |
+   |                              |              | the access defined  |
+   |                              |              | in acemask4 to the  |
+   |                              |              | file or directory.  |
+   |                              |              |                     |
+   | ACE4_ACCESS_DENIED_ACE_TYPE  | DENY         | Explicitly denies   |
+   |                              |              | the access defined  |
+   |                              |              | in acemask4 to the  |
+   |                              |              | file or directory.  |
+   |                              |              |                     |
+   | ACE4_SYSTEM_AUDIT_ACE_TYPE   | AUDIT        | LOG (in a system-   |
+   |                              |              | dependent way) any  |
+   |                              |              | access attempt to a |
+   |                              |              | file or directory   |
+   |                              |              | that uses any of    |
+   |                              |              | the access methods  |
+   |                              |              | specified in        |
+   |                              |              | acemask4.           |
+   |                              |              |                     |
+   | ACE4_SYSTEM_ALARM_ACE_TYPE   | ALARM        | Generate a system   |
+   |                              |              | ALARM (system       |
+   |                              |              | dependent) when any |
+   |                              |              | access attempt is   |
+   |                              |              | made to a file or   |
+   |                              |              | directory for the   |
+   |                              |              | access methods      |
+   |                              |              | specified in        |
+   |                              |              | acemask4.           |
+   +------------------------------+--------------+---------------------+
+
+                 +------+ +-----+ +-----+     +-----+  
+                 |Telnet| | FTP | | TFTP| ... | ... |  
+                 +------+ +-----+ +-----+     +-----+  
+                       |   |         |           |     
+                      +-----+     +-----+     +-----+  
+                      | TCP |     | UDP | ... | ... |  
+                      +-----+     +-----+     +-----+  
+                         |           |           |     
+                      +--------------------------+----+
+                      |    Internet Protocol & ICMP   |
+                      +--------------------------+----+
+                                     |                 
+                        +---------------------------+  
+                        |   Local Network Protocol  |  
+                        +---------------------------+  
+
+                         Protocol Relationships
+
+                               Figure 1.
+
+                   +-------------------------------+   
+                   | Internet Protocol & ICMP & GGP|   
+                   +-------------------------------+   
+                           |                 |         
+                 +---------------+   +---------------+ 
+                 |   Local Net   |   |   Local Net   | 
+                 +---------------+   +---------------+ 
+
+                           Gateway Protocols
+
+                               Figure 3.
+
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Version|  IHL  |Type of Service|          Total Length         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         Identification        |Flags|      Fragment Offset    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |  Time to Live |    Protocol   |         Header Checksum       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                       Source Address                          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Destination Address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                    Options                    |    Padding    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                    Example Internet Datagram Header
+
+                               Figure 4.
+
+      CLASS NUMBER LENGTH DESCRIPTION
+      ----- ------ ------ -----------
+        0     0      -    End of Option list.  This option occupies only
+                          1 octet; it has no length octet.
+        0     1      -    No Operation.  This option occupies only 1
+                          octet; it has no length octet.
+        0     2     11    Security.  Used to carry Security,
+                          Compartmentation, User Group (TCC), and
+                          Handling Restriction Codes compatible with DOD
+                          requirements.
+        0     3     var.  Loose Source Routing.  Used to route the
+                          internet datagram based on information
+                          supplied by the source.
+        0     9     var.  Strict Source Routing.  Used to route the
+                          internet datagram based on information
+                          supplied by the source.
+        0     7     var.  Record Route.  Used to trace the route an
+                          internet datagram takes.
+        0     8      4    Stream ID.  Used to carry the stream
+                          identifier.
+        2     4     var.  Internet Timestamp.
+
+          +--------+--------+---//---+---//---+---//---+---//---+
+          |10000010|00001011|SSS  SSS|CCC  CCC|HHH  HHH|  TCC   |
+          +--------+--------+---//---+---//---+---//---+---//---+
+           Type=130 Length=11
+
+        +--------+--------+--------+---------//--------+
+        |10000011| length | pointer|     route data    |
+        +--------+--------+--------+---------//--------+
+         Type=131
+
+        +--------+--------+--------+--------+
+        |01000100| length | pointer|oflw|flg|
+        +--------+--------+--------+--------+
+        |         internet address          |
+        +--------+--------+--------+--------+
+        |             timestamp             |
+        +--------+--------+--------+--------+
+        |                 .                 |
+                          .
+                          .
+        Type = 68
+
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|        Total Length = 21      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |      Identification = 111     |Flg=0|   Fragment Offset = 0   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 1 |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     data      |                                                
+   +-+-+-+-+-+-+-+-+                                                
+
+                       Example Internet Datagram
+
+                               Figure 5.
+
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 472      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  | Protocol = 6  |        header checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             data              |                                
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                
+
+                       Example Internet Datagram
+
+                               Figure 6.
+
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 5 |Type of Service|       Total Length = 216      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Identification = 111      |Flg=0|  Fragment Offset  =  32 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 119  | Protocol = 6  |        Header Checksum        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                         source address                        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            data               |                                
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                                
+
+                       Example Internet Fragment
+
+                               Figure 8.
+
+    0                   1                   2                   3   
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |Ver= 4 |IHL= 8 |Type of Service|       Total Length = 576      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |       Identification = 111    |Flg=0|     Fragment Offset = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Time = 123  |  Protocol = 6 |       Header Checksum         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                        source address                         |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                      destination address                      |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = x | Opt.  Len.= 3 | option value  | Opt. Code = x |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Len. = 4 |           option value        | Opt. Code = 1 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | Opt. Code = y | Opt. Len. = 3 |  option value | Opt. Code = 0 |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   \                                                               \
+   \                                                               \
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                             data                              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+                       Example Internet Datagram
+
+                               Figure 9.
+
+        +--------+
+        |00000001|
+        +--------+
+         Kind=1
+
+        +--------+--------+---------+--------+
+        |00000010|00000100|   max seg size   |
+        +--------+--------+---------+--------+
+         Kind=2   Length=4
+
+                              +---------+ ---------\      active OPEN  
+                              |  CLOSED |            \    -----------  
+                              +---------+<---------\   \   create TCB  
+                                |     ^              \   \  snd SYN    
+                   passive OPEN |     |   CLOSE        \   \           
+                   ------------ |     | ----------       \   \         
+                    create TCB  |     | delete TCB         \   \       
+                                V     |                      \   \     
+                              +---------+            CLOSE    |    \   
+                              |  LISTEN |          ---------- |     |  
+                              +---------+          delete TCB |     |  
+                   rcv SYN      |     |     SEND              |     |  
+                  -----------   |     |    -------            |     V  
+ +---------+      snd SYN,ACK  /       \   snd SYN          +---------+
+ |         |<-----------------           ------------------>|         |
+ |   SYN   |                    rcv SYN                     |   SYN   |
+ |   RCVD  |<-----------------------------------------------|   SENT  |
+ |         |                    snd ACK                     |         |
+ |         |------------------           -------------------|         |
+ +---------+   rcv ACK of SYN  \       /  rcv SYN,ACK       +---------+
+   |           --------------   |     |   -----------                  
+   |                  x         |     |     snd ACK                    
+   |                            V     V                                
+   |  CLOSE                   +---------+                              
+   | -------                  |  ESTAB  |                              
+   | snd FIN                  +---------+                              
+   |                   CLOSE    |     |    rcv FIN                     
+   V                  -------   |     |    -------                     
+ +---------+          snd FIN  /       \   snd ACK          +---------+
+ |  FIN    |<-----------------           ------------------>|  CLOSE  |
+ | WAIT-1  |------------------                              |   WAIT  |
+ +---------+          rcv FIN  \                            +---------+
+   | rcv ACK of FIN   -------   |                            CLOSE  |  
+   | --------------   snd ACK   |                           ------- |  
+   V        x                   V                           snd FIN V  
+ +---------+                  +---------+                   +---------+
+ |FINWAIT-2|                  | CLOSING |                   | LAST-ACK|
+ +---------+                  +---------+                   +---------+
+   |                rcv ACK of FIN |                 rcv ACK of FIN |  
+   |  rcv FIN       -------------- |    Timeout=2MSL -------------- |  
+   |  -------              x       V    ------------        x       V  
+    \ snd ACK                 +---------+delete TCB         +---------+
+     ------------------------>|TIME WAIT|------------------>| CLOSED  |
+                              +---------+                   +---------+
+
+                      TCP Connection State Diagram
+                               Figure 6.
+
+  2.  SYN-SENT    --> <SEQ=100><CTL=SYN>               --> SYN-RECEIVED
+  3.  ESTABLISHED <-- <SEQ=300><ACK=101><CTL=SYN,ACK>  <-- SYN-RECEIVED
+  4.  ESTABLISHED --> <SEQ=101><ACK=301><CTL=ACK>       --> ESTABLISHED
+  5.  ESTABLISHED --> <SEQ=101><ACK=301><CTL=ACK><DATA> --> ESTABLISHED
+          Basic 3-Way Handshake for Connection Synchronization
+                                Figure 7.
+
+  2.  SYN-SENT    --> <SEQ=100><CTL=SYN>               ...
+  3.  (duplicate) ... <SEQ=90><CTL=SYN>               --> SYN-RECEIVED
+  4.  SYN-SENT    <-- <SEQ=300><ACK=91><CTL=SYN,ACK>  <-- SYN-RECEIVED
+  5.  SYN-SENT    --> <SEQ=91><CTL=RST>               --> LISTEN
+  6.              ... <SEQ=100><CTL=SYN>               --> SYN-RECEIVED
+  7.  SYN-SENT    <-- <SEQ=400><ACK=101><CTL=SYN,ACK>  <-- SYN-RECEIVED
+  8.  ESTABLISHED --> <SEQ=101><ACK=401><CTL=ACK>      --> ESTABLISHED
+                    Recovery from Old Duplicate SYN
+                               Figure 9.
+
+        Segment Receive  Test
+        Length  Window
+        ------- -------  -------------------------------------------
+
+           0       0     SEG.SEQ = RCV.NXT
+
+           0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+
+          >0       0     not acceptable
+
+          >0      >0     RCV.NXT =< SEG.SEQ < RCV.NXT+RCV.WND
+                      or RCV.NXT =< SEG.SEQ+SEG.LEN-1 < RCV.NXT+RCV.WND
+
+                                            -------------
+                                            |/---------\|
+                                            ||   User  ||    --------
+                                            ||Interface|<--->| User |
+                                            |\----^----/|    --------
+                  ----------                |     |     |
+                  |/------\|  FTP Commands  |/----V----\|
+                  ||Server|<---------------->|   User  ||
+                  ||  PI  ||   FTP Replies  ||    PI   ||
+                  |\--^---/|                |\----^----/|
+                  |   |    |                |     |     |
+      --------    |/--V---\|      Data      |/----V----\|    --------
+      | File |<--->|Server|<---------------->|  User   |<--->| File |
+      |System|    || DTP  ||   Connection   ||   DTP   ||    |System|
+      --------    |\------/|                |\---------/|    --------
+                  ----------                -------------
+
+             1       7                8                     8
+            +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+     +-+-+-+-+-+-+-+-+
+            |0|       n     | |    d(1)       | ... |      d(n)     |
+            +-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+-+     +-+-+-+-+-+-+-+-+
+                                          ^             ^
+                                          |---n bytes---|
+                                              of data
+
+                         \    /
+               A - ASCII |    | N - Non-print
+                         |-><-| T - Telnet format effectors
+               E - EBCDIC|    | C - Carriage Control (ASA)
+                         /    \
+               I - Image
+               
+               L <byte size> - Local byte Byte size
+
+                               3      +---+
+                          ----------->| E |
+                         |            +---+
+                         |
+      +---+    cmd    +---+    2      +---+
+      | B |---------->| W |---------->| S |
+      +---+       --->+---+           +---+
+                 |     | |
+                 |     | |     4,5    +---+
+                 |  1  |  ----------->| F |
+                  -----               +---+
+
+      +---+   RNFR    +---+    1,2    +---+
+      | B |---------->| W |---------->| E |
+      +---+           +---+        -->+---+
+                       | |        |
+                3      | | 4,5    |
+         --------------  ------   |
+        |                      |  |   +---+
+        |               ------------->| S |
+        |              |   1,3 |  |   +---+
+        |             2|  --------
+        |              | |     |
+        V              | |     |
+      +---+   RNTO    +---+ 4,5 ----->+---+
+      |   |---------->| W |---------->| F |
+      +---+           +---+           +---+
+
+      +---+   REST    +---+    1,2    +---+
+      | B |---------->| W |---------->| E |
+      +---+           +---+        -->+---+
+                       | |        |
+                3      | | 4,5    |
+         --------------  ------   |
+        |                      |  |   +---+
+        |               ------------->| S |
+        |              |   3   |  |   +---+
+        |             2|  --------
+        |              | |     |
+        V              | |     |
+      +---+   cmd     +---+ 4,5 ----->+---+
+      |   |---------->| W |---------->| F |
+      +---+        -->+---+           +---+
+                  |      |
+                  |  1   |
+                   ------
+
+                            1
+      +---+   USER    +---+------------->+---+
+      | B |---------->| W | 2       ---->| E |
+      +---+           +---+------  |  -->+---+
+                       | |       | | |
+                     3 | | 4,5   | | |
+         --------------   -----  | | |
+        |                      | | | |
+        |                      | | | |
+        |                 ---------  |
+        |               1|     | |   |
+        V                |     | |   |
+      +---+   PASS    +---+ 2  |  ------>+---+
+      |   |---------->| W |------------->| S |
+      +---+           +---+   ---------->+---+
+                       | |   | |     |
+                     3 | |4,5| |     |
+         --------------   --------   |
+        |                    | |  |  |
+        |                    | |  |  |
+        |                 -----------
+        |             1,3|   | |  |
+        V                |  2| |  |
+      +---+   ACCT    +---+--  |   ----->+---+
+      |   |---------->| W | 4,5 -------->| F |
+      +---+           +---+------------->+---+

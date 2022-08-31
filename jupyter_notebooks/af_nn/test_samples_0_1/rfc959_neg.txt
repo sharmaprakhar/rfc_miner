@@ -1,0 +1,88 @@
+      In particular, the following new optional commands are included in
+      this edition of the specification:
+         CDUP - Change to Parent Directory
+         SMNT - Structure Mount
+         STOU - Store Unique
+         RMD - Remove Directory
+         MKD - Make Directory
+         PWD - Print Directory
+         SYST - System
+         A reply is an acknowledgment (positive or negative) sent from
+         server to user via the control connection in response to FTP
+         commands.  The general form of a reply is a completion code
+         (including error codes) followed by a text string.  The codes
+         are for use by programs and the text is usually intended for
+         human users.
+   3.1.  DATA REPRESENTATION AND STORAGE
+      Data is transferred from a storage device in the sending host to a
+      storage device in the receiving host.  Often it is necessary to
+      perform certain transformations on the data because data storage
+      representations in the two systems are different.  For example,
+      NVT-ASCII has different data storage representations in different
+      systems.  DEC TOPS-20s's generally store NVT-ASCII as five 7-bit
+      ASCII characters, left-justified in a 36-bit word. IBM Mainframe's
+      store NVT-ASCII as 8-bit EBCDIC codes.  Multics stores NVT-ASCII
+      as four 9-bit characters in a 36-bit word.  It is desirable to
+      convert characters into the standard NVT-ASCII representation when
+      transmitting text between dissimilar systems.  The sending and
+      receiving sites would have to perform the necessary
+      transformations between the standard representation and their
+      internal representations.
+            3.1.1.5.2.  CARRIAGE CONTROL (ASA)
+               The file contains ASA (FORTRAN) vertical format control
+               characters.  (See RFC 740 Appendix C; and Communications
+               of the ACM, Vol. 7, No. 10, p. 606, October 1964.)  In a
+               line or a record formatted according to the ASA Standard,
+               the first character is not to be printed.  Instead, it
+               should be used to determine the vertical movement of the
+               paper which should take place before the rest of the
+               record is printed.
+               The ASA Standard specifies the following control
+               characters:
+         3.1.2.3.  PAGE STRUCTURE
+            To transmit files that are discontinuous, FTP defines a page
+            structure.  Files of this type are sometimes known as
+            "random access files" or even as "holey files".  In these
+            files there is sometimes other information associated with
+            the file as a whole (e.g., a file descriptor), or with a
+            section of the file (e.g., page access controls), or both.
+            In FTP, the sections of the file are called pages.
+            To provide for various page sizes and associated
+            information, each page is sent with a page header.  The page
+            header has the following defined fields:Data Length
+                  The number of logical bytes in the page data.  The
+                  minimum data length is 0.
+               Page Type
+                  The type of page this is.  The following page types
+                  are defined:
+                     0 = Last Page
+                        This is used to indicate the end of a paged
+                        structured transmission.  The header length must
+                        be 4, and the data length must be 0.
+                     1 = Simple Page
+                        This is the normal type for simple paged files
+                        with no page level associated control
+                        information.  The header length must be 4.
+                     2 = Descriptor Page
+                        This type is used to transmit the descriptive
+                        information for the file as a whole.
+                     3 = Access Controlled Page
+                        This type includes an additional header field
+                        for paged files with page level access control
+                        information.  The header length must be 5.
+               Optional Fields
+                  Further header fields may be used to supply per page
+                  control information, for example, per page access
+                  control.
+            All fields are one logical byte in length.  The logical byte
+            size is specified by the TYPE command.  See Appendix I for
+            further details and a specific case at the page structure.
+      is when the user-DTP is sending the data in a transfer mode that
+      requires the connection to be closed to indicate EOF.  The server
+      MUST close the data connection under the following conditions:
+         1. The server has completed sending data in a transfer mode
+            that requires a close to indicate EOF.
+         2. The server receives an ABORT command from the user.
+         3. The port specification is changed by a command from the user.
+         4. The control connection is closed legally or otherwise.
+         5. An irrecoverable error condition occurs.            

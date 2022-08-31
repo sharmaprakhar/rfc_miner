@@ -1,0 +1,109 @@
+           +----------+-------------+---------+
+           | Protocol | Information | Padding |
+           | 8/16 bits|      *      |    *    |
+           +----------+-------------+---------+
+   +------+        +-----------+           +--------------+
+   |      | UP     |           | OPENED    |              | SUCCESS/NONE
+   | Dead |------->| Establish |---------->| Authenticate |--+
+   |      |        |           |           |              |  |
+   +------+        +-----------+           +--------------+  |
+      ^               |                        |             |
+      |          FAIL |                   FAIL |             |
+      +<--------------+             +----------+             |
+      |                             |                        |
+      |            +-----------+    |           +---------+  |
+      |       DOWN |           |    |   CLOSING |         |  |
+      +------------| Terminate |<---+<----------| Network |<-+
+                   |           |                |         |
+                   +-----------+                +---------+
+      | State
+      |    0         1         2         3         4         5
+Events| Initial   Starting  Closed    Stopped   Closing   Stopping
+------+-----------------------------------------------------------
+ Up   |    2     irc,scr/6     -         -         -         -
+ Down |    -         -         0       tls/1       0         1
+ Open |  tls/1       1     irc,scr/6     3r        5r        5r
+ Close|    0       tlf/0       2         2         4         4
+      |
+  TO+ |    -         -         -         -       str/4     str/5
+  TO- |    -         -         -         -       tlf/2     tlf/3
+      |
+ RCR+ |    -         -       sta/2 irc,scr,sca/8   4         5
+ RCR- |    -         -       sta/2 irc,scr,scn/6   4         5
+ RCA  |    -         -       sta/2     sta/3       4         5
+ RCN  |    -         -       sta/2     sta/3       4         5
+      |
+ RTR  |    -         -       sta/2     sta/3     sta/4     sta/5
+ RTA  |    -         -         2         3       tlf/2     tlf/3
+      |
+ RUC  |    -         -       scj/2     scj/3     scj/4     scj/5
+ RXJ+ |    -         -         2         3         4         5
+ RXJ- |    -         -       tlf/2     tlf/3     tlf/2     tlf/3
+      |
+ RXR  |    -         -         2         3         4         5
+      | State
+      |    6         7         8           9
+Events| Req-Sent  Ack-Rcvd  Ack-Sent    Opened
+------+-----------------------------------------
+ Up   |    -         -         -           -
+ Down |    1         1         1         tld/1
+ Open |    6         7         8           9r
+ Close|irc,str/4 irc,str/4 irc,str/4 tld,irc,str/4
+      |
+  TO+ |  scr/6     scr/6     scr/8         -
+  TO- |  tlf/3p    tlf/3p    tlf/3p        -
+      |
+ RCR+ |  sca/8   sca,tlu/9   sca/8   tld,scr,sca/8
+ RCR- |  scn/6     scn/7     scn/6   tld,scr,scn/6
+ RCA  |  irc/7     scr/6x  irc,tlu/9   tld,scr/6x
+ RCN  |irc,scr/6   scr/6x  irc,scr/8   tld,scr/6x
+      |
+ RTR  |  sta/6     sta/6     sta/6   tld,zrc,sta/5
+ RTA  |    6         6         8       tld,scr/6
+      |
+ RUC  |  scj/6     scj/7     scj/8       scj/9
+ RXJ+ |    6         6         8           9
+ RXJ- |  tlf/3     tlf/3     tlf/3   tld,irc,str/5
+      |
+ RXR  |    6         7         8         ser/9
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Code      |  Identifier   |            Length             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    Data ...
+   +-+-+-+-+
+         Number of Collisions        Probability
+         --------------------   ---------------------
+                 1              1/2**32    = 2.3 E-10
+                 2              1/2**32**2 = 5.4 E-20
+                 3              1/2**32**3 = 1.3 E-29
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |    Length     |          Magic-Number
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         Magic-Number (cont)       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+           
+   Up   = lower layer is Up                 tlu = This-Layer-Up
+   Down = lower layer is Down               tld = This-Layer-Down
+   Open = administrative Open               tls = This-Layer-Started
+   Close= administrative Close              tlf = This-Layer-Finished
+
+   TO+  = Timeout with counter > 0          irc = Initialize-Restart-Count
+   TO-  = Timeout with counter expired      zrc = Zero-Restart-Count
+
+   RCR+ = Receive-Configure-Request (Good)  scr = Send-Configure-Request
+   RCR- = Receive-Configure-Request (Bad)
+   RCA  = Receive-Configure-Ack             sca = Send-Configure-Ack
+   RCN  = Receive-Configure-Nak/Rej         scn = Send-Configure-Nak/Rej
+   RTR  = Receive-Terminate-Request         str = Send-Terminate-Request
+   RTA  = Receive-Terminate-Ack             sta = Send-Terminate-Ack
+   RUC  = Receive-Unknown-Code              scj = Send-Code-Reject
+   RXJ+ = Receive-Code-Reject (permitted)
+       or Receive-Protocol-Reject
+   RXJ- = Receive-Code-Reject (catastrophic)
+       or Receive-Protocol-Reject
+   RXR  = Receive-Echo-Request              ser = Send-Echo-Reply
+       or Receive-Echo-Reply
+       or Receive-Discard-Request     

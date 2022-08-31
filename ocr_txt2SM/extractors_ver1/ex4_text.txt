@@ -1,0 +1,52 @@
+|
+
+|
++———(A) Token request——| Client —
+
+|
+
+|
+
+|
+
+| | Authorization
+
+| +—(B) Access token—> Server Interface
+
+| | | (HTTPS)
+
+| | | _____________________ |
+
+| | | |
++——v ————————————— + | Pub/Sub Interface |
+| Authorization | | (MQTT over TLS) |
+| Server | + ——————————— A ————————— +
+| ________________ | | |
+
+| A (C)Connection (F)Connection
+
+| | request + response
+
+| | access token |
+
+| | | |
+
+| | +———v —————————————— +
+
+| | | Broker
+
+| | | (MQTT over TLS) |
+
+| | | __________________ |
+
+| +(D)Introspection—|
+
+| request (optional) | RS—AS interface |
+
+I I (HTTPS)
+
++—(E)Introspection————>| __________________
+
+response (optional)
+
+Figure 1: Connection Setup
