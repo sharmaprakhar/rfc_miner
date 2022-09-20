@@ -21,18 +21,18 @@ The base class provides two class objects:
 
 artifactExtractor: provides APIs for extraction of protocol RFC artifacts. We identify the following major classes of artifacts:<br />
     &emsp; 1. Natural language text<br />
-    &emsp; 2. string definition<br />
-    &emsp; 3. message structure<br />
-    &emsp; 4. data flow diagrams<br />
-    &emsp; 5. topology diagrams<br />
-    &emsp; 6. tables<br />
-    &emsp; 7. state diagrams<br />
-    &emsp; 8. client-server comminucation diagrams<br />
-    &emsp; 9. protocol layer diagrams<br />
-    &emsp; 10. captions<br />
+    &emsp; 2. C-Struct definition<br />
+    &emsp; 3. Message structure<br />
+    &emsp; 4. Data flow diagrams<br />
+    &emsp; 5. Topology diagrams<br />
+    &emsp; 6. Tables<br />
+    &emsp; 7. State diagrams<br />
+    &emsp; 8. Client-server comminucation diagrams<br />
+    &emsp; 9. Protocol layer diagrams<br />
+    &emsp; 10. Captions<br />
     &emsp; 11. RFC page headers<br />
-    &emsp; 12. table of contents<br />
-    &emsp; 13. lexical specifications<br />
+    &emsp; 12. Table of contents<br />
+    &emsp; 13. Lexical specifications<br />
 
 topic_model: provides APIs for the following functionalities:<br />
     &emsp; 1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
