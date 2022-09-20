@@ -1,9 +1,8 @@
 import torch
 import torch.nn as nn
 # from models import lstm_model, classifier
-from torch.nn import LSTM, Linear, ReLU, BatchNorm1d
+from torch.nn import LSTM, Linear, ReLU, BatchNorm1d, Dropout, MaxPool1d
 import torch.nn.functional as F
-
 from torch.utils.data import Dataset, DataLoader, TensorDataset
 
 

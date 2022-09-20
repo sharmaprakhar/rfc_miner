@@ -2582,7 +2582,7 @@ RFC 1001                                                      March 1987
 
                      NAME RELEASE RESPONSE
               <---------------------------------
-<endonr_rfcclass_dataflow>
+<end_onr_rfcclass_dataflow>
 15.4.3.  RELEASE BY M NODES
 
    The name release procedure of the M node is a combination of the P

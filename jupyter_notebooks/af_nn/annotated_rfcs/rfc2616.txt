@@ -878,7 +878,7 @@ RFC 2616                        HTTP/1.1                       June 1999
    of *TEXT MAY contain characters from character sets other than ISO-
    8859-1 [22] only when encoded according to the rules of RFC 2047
    [14].
-<onr_rfcclass_lex_specs>
+<onr_rfcclass_lex_spec>
        TEXT           = <any OCTET except CTLs,
                         but including LWS>
 <end_onr_rfcclass_lex_spec>

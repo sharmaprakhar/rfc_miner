@@ -94,7 +94,7 @@ def tfidf(threshold, rfc_dir=None):
     sim_array[sim_array<threshold]=0
     sim_array[sim_array>threshold]=1
     # print('pairwise doc similarity matrix numpy:', sim_array)
-    print(np.sum(sim_array))
+    
 
 if __name__=="__main__":
     rfc_dir = 'rfcs'

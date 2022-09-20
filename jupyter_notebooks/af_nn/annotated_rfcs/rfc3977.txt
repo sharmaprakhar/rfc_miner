@@ -1284,7 +1284,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
       [C] NEXT
       [S] 200 Server ready, posting allowed
       [S] 223 3000237 <668929@example.org> retrieved
-<endonr_rfcclass_cs>
+<end_onr_rfcclass_cs>
 
 
 Feather                     Standards Track                    [Page 23]
@@ -1408,14 +1408,14 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
    A wildmat is described by the following ABNF [RFC4234] syntax, which
    is an extract of that in Section 9.8.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      wildmat = wildmat-pattern *("," ["!"] wildmat-pattern)
      wildmat-pattern = 1*wildmat-item
      wildmat-item = wildmat-exact / wildmat-wild
      wildmat-exact = %x22-29 / %x2B / %x2D-3E / %x40-5A / %x5E-7E /
           UTF8-non-ascii ; exclude ! * , ? [ \ ]
      wildmat-wild = "*" / "?"
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
    Note: the characters ",", "\", "[", and "]" are not allowed in
    wildmats, while * and ? are always wildcards.  This should not be a
    problem, since these characters cannot occur in newsgroup names,
@@ -5151,7 +5151,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
    This syntax defines the non-terminal <command-line>, which represents
    what is sent from the client to the server (see section 3.1 for
    limits on lengths).
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      command-line = command EOL
      command = X-command
      X-command = keyword *(WS token)
@@ -5176,8 +5176,8 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
            post-command /
            quit-command /
            stat-command
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      article-command = "ARTICLE" [WS article-ref]
      body-command = "BODY" [WS article-ref]
      capabilities-command = "CAPABILITIES" [WS keyword]
@@ -5195,14 +5195,14 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      newnews-command = "NEWNEWS" WS wildmat WS date-time
      next-command = "NEXT"
      over-command = "OVER" [WS range-ref]
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 
 
 Feather                     Standards Track                    [Page 92]
 
 RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      post-command = "POST"
      quit-command = "QUIT"
      stat-command = "STAT" [WS article-ref]
@@ -5218,23 +5218,23 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      range = article-number ["-" [article-number]]
      range-ref = range / message-id
      time = 2DIGIT 2DIGIT 2DIGIT
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.3.  Command Continuation
 
    This syntax defines the further material sent by the client in the
    case of multi-stage commands and those that stream data.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      command-datastream = UNDEFINED
        ; not used, provided as a hook for extensions
      command-continuation = ihave-335-continuation /
            post-340-continuation
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      ihave-335-continuation = encoded-article
      post-340-continuation = encoded-article
      encoded-article = multi-line-data-block
        ; after undoing the "dot-stuffing", this MUST match <article>
-<end_onr_rfcclass_lexspec>      
+<end_onr_rfcclass_lex_spec>      
 
 9.4.  Responses
 
@@ -5243,7 +5243,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
    This syntax defines the non-terminal <response>, which represents the
    generic form of responses; that is, what is sent from the server to
    the client in response to a <command> or a <command-continuation>.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      response = simple-response / multi-line-response
      simple-response = initial-response-line
      multi-line-response = initial-response-line multi-line-data-block
@@ -5252,7 +5252,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
            initial-response-content [SP trailing-comment] CRLF
      initial-response-content = X-initial-response-content
      X-initial-response-content = 3DIGIT *(SP response-argument)
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 
 
 Feather                     Standards Track                    [Page 93]
@@ -5268,7 +5268,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
    This syntax defines the specific initial response lines for the
    various commands in this specification (see section 3.1 for limits on
    lengths).  Only those response codes with arguments are listed.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      initial-response-content =/ response-111-content /
            response-211-content /
            response-220-content /
@@ -5276,8 +5276,8 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
            response-222-content /
            response-223-content /
            response-401-content
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      response-111-content = "111" SP date4y time
      response-211-content = "211" 3(SP article-number) SP newsgroup-name
      response-220-content = "220" SP article-number SP message-id
@@ -5285,7 +5285,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      response-222-content = "222" SP article-number SP message-id
      response-223-content = "223" SP article-number SP message-id
      response-401-content = "401" SP capability-label
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.4.3.  Multi-line Response Contents
 
    This syntax defines the content of the various multi-line responses;
@@ -5293,7 +5293,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
    data block after any "dot-stuffing" has been undone.  The numeric
    portion of each non-terminal name indicates the response code that is
    followed by this data.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      multi-line-response-content = article-220-ml-content /
            body-222-ml-content /
            capabilities-101-ml-content /
@@ -5305,19 +5305,19 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
            newgroups-231-ml-content /
            newnews-230-ml-content /
            over-224-ml-content
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      article-220-ml-content = article
      body-222-ml-content = body
      capabilities-101-ml-content = version-line CRLF
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 
 
 Feather                     Standards Track                    [Page 94]
 
 RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
            *(capability-line CRLF)
      hdr-225-ml-content = *(article-number SP hdr-content CRLF)
      head-221-ml-content = 1*header
@@ -5327,8 +5327,8 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      newgroups-231-ml-content = active-groups-list
      newnews-230-ml-content = *(message-id CRLF)
      over-224-ml-content = *(article-number over-content CRLF)
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      active-groups-list = *(newsgroup-name SPA article-number
            SPA article-number SPA newsgroup-status CRLF)
      hdr-content = *S-NONTAB
@@ -5338,21 +5338,21 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      over-content = 1*6(TAB hdr-content) /
            7(TAB hdr-content) *(TAB hdr-n-content)
      private-status = token ; except the values in newsgroup-status
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.5.  Capability Lines
 
    This syntax defines the generic form of a capability line in the
    capabilities list (see Section 3.3.1).
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      capability-line = capability-entry
      capability-entry = X-capability-entry
      X-capability-entry = capability-label *(WS capability-argument)
      capability-label = keyword
      capability-argument = token
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
    This syntax defines the specific capability entries for the
    capabilities in this specification.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      capability-entry =/
            hdr-capability /
            ihave-capability /
@@ -5366,7 +5366,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      hdr-capability = "HDR"
      ihave-capability = "IHAVE"
      implementation-capability = "IMPLEMENTATION" *(WS token)
-<end_onr_rfcclass_lexspec>     
+<end_onr_rfcclass_lex_spec>     
 
 
 
@@ -5374,7 +5374,7 @@ Feather                     Standards Track                    [Page 95]
 
 RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      list-capability = "LIST" 1*(WS keyword)
      mode-reader-capability = "MODE-READER"
      newnews-capability = "NEWNEWS"
@@ -5384,26 +5384,26 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
      version-line = "VERSION" 1*(WS version-number)
      version-number = nzDIGIT *5DIGIT
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.6.  LIST Variants
 
    This section defines more specifically the keywords for the LIST
    command and the syntax of the corresponding response contents.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      ; active
      list-arguments =/ "ACTIVE" [WS wildmat]
      list-content =/ list-active-content
      list-active-content = active-groups-list
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      ; active.times
      list-arguments =/ "ACTIVE.TIMES" [WS wildmat]
      list-content =/ list-active-times-content
      list-active-times-content =
            *(newsgroup-name SPA 1*DIGIT SPA newsgroup-creator CRLF)
      newsgroup-creator = U-TEXT
-<end_onr_rfcclass_lexspec>
-<onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
+<onr_rfcclass_lex_spec>
      ; distrib.pats
      list-arguments =/ "DISTRIB.PATS"
      list-content =/ list-distrib-pats-content
@@ -5423,14 +5423,14 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      list-arguments =/ "NEWSGROUPS" [WS wildmat]
      list-content =/ list-newsgroups-content
      list-newsgroups-content =
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 
 
 Feather                     Standards Track                    [Page 96]
 
 RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
            *(newsgroup-name WS newsgroup-description CRLF)
      newsgroup-description = S-TEXT
 
@@ -5445,24 +5445,24 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
            "References:" CRLF
            ( ":bytes" CRLF ":lines" / "Bytes:" CRLF "Lines:") CRLF
            *((header-name ":full" / metadata-name) CRLF)
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.7.  Articles
 
    This syntax defines the non-terminal <article>, which represents the
    format of an article as described in Section 3.6.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      article = 1*header CRLF body
      header = header-name ":" [CRLF] SP header-content CRLF
      header-content = *(S-CHAR / [CRLF] WS)
      body = *(*B-CHAR CRLF)
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.8.  General Non-terminals
 
    These non-terminals are used at various places in the syntax and are
    collected here for convenience.  A few of these non-terminals are not
    used in this specification but are provided for the consistency and
    convenience of extension authors.
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      multi-line-data-block = content-lines termination
      content-lines = *([content-text] CRLF)
      content-text = (".." / B-NONDOT) *B-CHAR
@@ -5479,14 +5479,14 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
      wildmat-pattern = 1*wildmat-item
      wildmat-item = wildmat-exact / wildmat-wild
      wildmat-exact = %x22-29 / %x2B / %x2D-3E / %x40-5A / %x5E-7E /
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 
 
 Feather                     Standards Track                    [Page 97]
 
 RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
           UTF8-non-ascii  ; exclude ! * , ? [ \ ]
      wildmat-wild = "*" / "?"
 
@@ -5530,7 +5530,7 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
                  %xF4 %x80-8F 2UTF8-tail
      UTF8-tail = %x80-BF
      WS = 1*(SP / TAB)
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
    The following non-terminals require special consideration.  They
    represent situations where material SHOULD be restricted to UTF-8,
    but implementations MUST be able to cope with other character
@@ -5544,20 +5544,20 @@ RFC 3977         Network News Transfer Protocol (NNTP)      October 2006
 
 
    Implementations MUST accept any content that meets this syntax:
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      S-CHAR   = %x21-FF
      S-NONTAB = CTRL / SP / S-CHAR
      S-TEXT   = (CTRL / S-CHAR) *B-CHAR
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
    and MAY pass such content on unaltered.
 
    When generating new content or re-encoding existing content,
    implementations SHOULD conform to this syntax:
-<onr_rfcclass_lexspec>
+<onr_rfcclass_lex_spec>
      S-CHAR   = P-CHAR
      S-NONTAB = U-NONTAB
      S-TEXT   = U-TEXT
-<end_onr_rfcclass_lexspec>
+<end_onr_rfcclass_lex_spec>
 9.9.  Extensions and Validation
 
    The specification of a registered extension MUST include formal

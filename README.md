@@ -20,29 +20,37 @@ How To Run:
 The base class provides two class objects: 
 
 artifactExtractor: provides APIs for extraction of protocol RFC artifacts. We identify the following major classes of artifacts:
-    1. Natural language text
-    2. string definition
-    3. message structure
-    4. data flow diagrams
-    5. topology diagrams
-    6. tables
-    7. state diagrams
-    8. client-server comminucation diagrams
-    9. protocol layer diagrams
-    10. captions
-    11. headers
-    12. table of contents
-    13. lexical specifications
-
-Usage: 
-
+    1. Natural language text<br />
+    2. string definition<br />
+    3. message structure<br />
+    4. data flow diagrams<br />
+    5. topology diagrams<br />
+    6. tables<br />
+    7. state diagrams<br />
+    8. client-server comminucation diagrams<br />
+    9. protocol layer diagrams<br />
+    10. captions<br />
+    11. headers<br />
+    12. table of contents<br />
+    13. lexical specifications<br />
 
 topic_model: provides APIs for the following functionalities:
-    1. Cluster a given set of RFCs using explicit connection information inside RFCs
-    2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups
-    3. Carry out topic modeling on RFCs using two major topic modeling techniques:
-        a. Latent Dirichlet Allocation
-        b. BERT model based topic modeling (BERTopic)
+    1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
+    2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups<br />
+    3. Carry out topic modeling on RFCs using two major topic modeling techniques:<br />
+        a. Latent Dirichlet Allocation<br />
+        b. BERT model based topic modeling (BERTopic)<br />
 
-Usage:
+To run the n-way clasifier:
+    python main.py --rfcs rfcs/ --extraction_method 'nway'
+
+To run the symbol based classifier:
+    python main.py --rfcs rfcs/ --extraction_method 'symbol_based'
+
+To run the tfidf vectorizer:
+    python main.py --rfcs rfcs/ --topic_method tfidf
+
+To run the lda topic mode;:
+    python main.py --rfcs rfcs/ --topic_method lda
+
 

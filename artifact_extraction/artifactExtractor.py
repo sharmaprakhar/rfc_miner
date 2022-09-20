@@ -1,5 +1,6 @@
 from os import listdir, symlink
 from os.path import isfile, join
+import os
 import re
 
 def explore(idx, lines):
@@ -62,7 +63,7 @@ def include_fig_caption(end, lines):
             return end+i+1
     return False
 
-def extract_sym(rfc_dir, savedir):
+def extract_sym(rfc_dir):
     symbols = ['#', '|', '=', '----', '->', '<-', '!']
     onlyfiles = [join(rfc_dir, f) for f in listdir(rfc_dir) if isfile(join(rfc_dir, f))]
 
@@ -117,7 +118,9 @@ def extract_sym(rfc_dir, savedir):
             
     
         # write to artifact file
-        with open(join(savedir, 'artifact{}.txt'.format(r[-8:-4])), 'a+') as fh:
+        if not os.path.isdir('rfc_miner_output_files/'):
+            os.makedirs('rfc_miner_output_files/')
+        with open(join('rfc_miner_output_files/', 'artifact{}.txt'.format(r[-8:-4])), 'a+') as fh:
             for a in artifacts:
                 fh.write('\n')
                 fh.write(a)

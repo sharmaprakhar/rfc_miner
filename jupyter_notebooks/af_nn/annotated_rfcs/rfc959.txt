@@ -407,7 +407,7 @@ File Transfer Protocol
 
       With the above definitions in mind, the following model (shown in
       Figure 1) may be diagrammed for an FTP service.
-<onr_rfcclass_dataflow>
+<onr_rfcclass_topologyDiag>
                                             -------------
                                             |/---------\|
                                             ||   User  ||    --------
@@ -426,7 +426,7 @@ File Transfer Protocol
                   ----------                -------------
 
                   Server-FTP                   USER-FTP
-<end_onr_rfcclass_dataflow>
+<end_onr_rfcclass_topologyDiag>
       NOTES: 1. The data connection may be used in either direction.
              2. The data connection need not exist all of the time.
 <onr_rfcclass_caption>
@@ -474,7 +474,7 @@ File Transfer Protocol
       server data transfer processes.  Following is a model of this
       server-server interaction.
 
-<onr_rfcclass_dataflow>
+<onr_rfcclass_topologyDiag>
                     Control     ------------   Control
                     ---------->| User-FTP |<-----------
                     |          | User-PI  |           |
@@ -484,7 +484,7 @@ File Transfer Protocol
             | Server-FTP |   Data Connection      | Server-FTP |
             |    "A"     |<---------------------->|    "B"     |
             -------------- Port (A)      Port (B) --------------
-<end_onr_rfcclass_dataflow>      
+<end_onr_rfcclass_topologyDiag>    
 <onr_rfcclass_caption>
                                  Figure 2
 <end_onr_rfcclass_caption>
@@ -2511,7 +2511,7 @@ Postel & Reynolds                                              [Page 44]
 RFC 959                                                     October 1985
 File Transfer Protocol
 
-<onr_rfcclass_table>
+<onr_rfcclass_dataflow>
          User-PI - Server A                User-PI - Server B
          ------------------                ------------------
          
@@ -2522,7 +2522,7 @@ File Transfer Protocol
                                            B->C : 200 Okay
          C->A : STOR                       C->B : RETR
                     B->A : Connect to HOST-A, PORT-a
-<end_onr_rfcclass_table>
+<end_onr_rfcclass_dataflow>
 <onr_rfcclass_caption>
                                 Figure 3
 <end_onr_rfcclass_caption>

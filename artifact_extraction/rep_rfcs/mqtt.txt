@@ -449,7 +449,7 @@ Sengul & Kirby            Expires 26 April 2022                 [Page 8]
 
 Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
-<onr_rfcclass_dataflow>
+
                              +---------------------+
                              | Client              |
                              |                     |
@@ -477,7 +477,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
         response (optional)
 
                          Figure 1: Connection setup
-<end_onr_rfcclass_dataflow>
+
 2.1.  Client Token Request to the Authorization Server (AS)
 
    The first step in the protocol flow (Figure 1 (A)) is the token
@@ -785,7 +785,7 @@ Sengul & Kirby            Expires 26 April 2022                [Page 14]
 
 Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
-<onr_rfcclass_msgStructure>
+
           0             8             16
           +---------------------------+
           |Protocol name length = 4B  |
@@ -816,7 +816,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
        Figure 2: MQTT v5 CONNECT Variable Header with Authentication
                           Method property for ACE.
-<end_onr_rfcclass_msgStructure>
+
    The CONNECT flags are Username, Password, Will retain, Will QoS, Will
    Flag, Clean Start, and Reserved.  Figure 3 shows how the flags MUST
    be set to use AUTH packets for authentication and authorization,
@@ -824,7 +824,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    RS MAY also support token transport using Username and Password to
    provide a security option for MQTT v3.1.1 clients, as described in
    Section 6.
-<onr_rfcclass_msgStructure>
+
    +-----------------------------------------------------------+
    |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
    |   Flag  |Flag |           |        |         |Start|      |
@@ -833,7 +833,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    +-----------------------------------------------------------+
 
                       Figure 3: CONNECT flags for AUTH
-<end_onr_rfcclass_msgStructure>
+
 
 
 
@@ -953,14 +953,14 @@ Sengul & Kirby            Expires 26 April 2022                [Page 17]
 
 Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
-<onr_rfcclass_msgStructure>
+
    +-----------------------------------------------------------------+
    |Authentication|Token Length|Token   |MAC or Signature            |
    |Data Length   |            |        |(over TLS exporter content) |
    +-----------------------------------------------------------------+
 
     Figure 4: Authentication Data for PoP based on TLS exporter content
-<end_onr_rfcclass_msgStructure>
+
    For this option, the Authentication Data inside the client's CONNECT
    MUST contain the two-byte integer token length, the token, and the
    keyed message digest (MAC) or the Client signature (as shown in
@@ -976,7 +976,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    session (see Section 4).
 
 2.2.4.2.2.  Proof-of-Possession via Broker-generated Challenge/Response
-<onr_rfcclass_msgStructure>
+
    +------------------------------------+
    |Authentication|Token Length|Token   |
    |Data Length   |            |        |
@@ -984,15 +984,14 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
      Figure 5: Authentication Data to Initiate PoP based on Challenge/
                                   Response
-<end_onr_rfcclass_msgStructure>
-<onr_rfcclass_msgStructure>
+
    +------------------------------+
    |Authentication|Nonce (8 bytes)|
    |Data Length   |               |
    +------------------------------+
 
              Figure 6: Authentication Data for Broker Challenge
-<end_onr_rfcclass_msgStructure>
+
    For this option, the Broker follows a Broker-generated challenge/
    response protocol.  If the Authentication Data inside the Client's
    CONNECT contains only the two-byte integer token length and the token
@@ -1015,14 +1014,14 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    Authentication Method, which MUST be set to "ace" and Authentication
    Data.  The Authentication Data MUST NOT be empty and contains an
    8-byte nonce as a challenge for the Client (Figure 6).
-<onr_rfcclass_msgStructure>
+
    +------------------------------------------------------------------+
    |Authentication|Client Nonce   |Client|MAC or Signature            |
    |Data Length   |Length         |nonce |(over RS nonce+Client nonce)|
    +------------------------------------------------------------------+
 
         Figure 7: Authentication Data for Client Challenge Response
-<end_onr_rfcclass_msgStructure>
+
    The Client responds to this with an AUTH packet with a reason code
    "0x18 (Continue Authentication)".  Similarly, the Client packet sets
    the Authentication Method to "ace".  The Authentication Data in the
@@ -1035,7 +1034,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    success case is illustrated in Figure 8.  The client MAY also re-
    authenticate using this challenge-response flow, as described in
    Section 4.
-<onr_rfcclass_dataflow>
+
                     Client      Broker
                      |             |
                      |<===========>| TLS connection setup
@@ -1057,7 +1056,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
                      |<------------+ CONNACK '0x00 (Success)'
 
            Figure 8: PoP Challenge/Response Flow - Success
-<end_onr_rfcclass_dataflow>
+
 
 
 
@@ -1129,7 +1128,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    Information Format (AIF) for ACE [I-D.ietf-ace-aif].  Using the
    Concise Data Definition Language (CDDL) [RFC8610], the specific data
    model for MQTT is:
-<onr_rfcclass_lex_spec>
+
  AIF-MQTT = AIF-Generic<topic_filter, permissions>
  AIF-Generic<topic_filter, permissions> = [*[topic_filter, permissions]]
  topic_filter = tstr
@@ -1137,7 +1136,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
  permission = "pub"/"sub"
 
                     Figure 9: AIF-MQTT data model
-<end_onr_rfcclass_lex_spec>
+
    Topic filters are implemented according to Section 4.7 of MQTT v5.0 -
    the OASIS Standard [MQTT-OASIS-Standard-v5].  By default, Wildcard
    Subscriptions are supported, and so, the topic filter may include
@@ -1150,11 +1149,11 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    means Wildcard Subscriptions are supported.
 
    Following this model, an example scope may contain:
-<onr_rfcclass_lex_spec>
+
  [["topic1", ["pub","sub"]], ["topic2/#",["pub"]], ["+/topic3",["sub"]]]
 
                        Figure 10: Example scope
-<end_onr_rfcclass_lex_spec>
+
    This access token gives publish ("pub") and subscribe ("sub")
    permissions to the "topic1", publish permission to all the subtopics
    of "topic2", and subscribe permission to all "topic3", skipping one
@@ -1458,7 +1457,7 @@ Sengul & Kirby            Expires 26 April 2022                [Page 26]
 
 Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
-<onr_rfcclass_msgStructure>
+
           0             8             16
           +---------------------------+
           |Protocol name length = 4B  |
@@ -1482,10 +1481,10 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
 
          Figure 11: MQTT CONNECT variable header using username and
                              password for ACE.
-<end_onr_rfcclass_msgStructure>
+
    Figure 12 shows how the MQTT connect flags MUST be set to initiate a
    connection with the Broker.
-<onr_rfcclass_msgStructure>
+
    +-----------------------------------------------------------+
    |User name|Pass.|Will retain|Will QoS|Will Flag|Clean| Rsvd.|
    | flag    |flag |           |        |         |     |      |
@@ -1494,7 +1493,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    +-----------------------------------------------------------+
 
               Figure 12: MQTT CONNECT flags.  (Rsvd=Reserved)
-<end_onr_rfcclass_msgStructure>
+
 
 
 
@@ -1541,11 +1540,11 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    ACE token, this field MUST be prefixed with 'ace' keyword, i.e., the
    Username field is a concatenation of 'a', 'c', 'e' and the access
    token represented as:
-<onr_rfcclass_msgStructure>
+
                        'U+0061'||'U+0063'||'U+0065'||UTF-8(access token)
 
                       Figure 13: Username in CONNECT
-<end_onr_rfcclass_msgStructure>
+
    To this end, the access token MUST be base64url encoded, omitting the
    '=' padding characters [RFC4648].
 
@@ -1775,7 +1774,7 @@ Internet-Draft           MQTT-TLS profile of ACE            October 2021
    ACE Pub-Sub Profile [I-D.ietf-ace-pubsub-profile].  However, this
    solution would still not provide privacy for other fields of the
    packet, such as Topic Name.
-<onr_rfcclass_references_start>
+
 10.  References
 
 10.1.  Normative References
