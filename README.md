@@ -30,14 +30,14 @@ artifactExtractor: provides APIs for extraction of protocol RFC artifacts. We id
     &emsp; 8. client-server comminucation diagrams<br />
     &emsp; 9. protocol layer diagrams<br />
     &emsp; 10. captions<br />
-    &emsp; 11. headers<br />
+    &emsp; 11. RFC page headers<br />
     &emsp; 12. table of contents<br />
     &emsp; 13. lexical specifications<br />
 
-topic_model: provides APIs for the following functionalities:
+topic_model: provides APIs for the following functionalities:<br />
     &emsp; 1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
     &emsp; 2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups<br />
-    &emsp; 3. Carry out topic modeling on RFCs using two major topic modeling techniques:<br />
+    &emsp; 3. Perform topic modeling on RFCs using two major topic modeling techniques:<br />
         &emsp;&emsp; a. Latent Dirichlet Allocation<br />
         &emsp;&emsp; b. BERT model based topic modeling (BERTopic)<br />
 
@@ -52,5 +52,7 @@ To run the tfidf vectorizer:<br />
 
 To run the lda topic mode;:<br />
     &emsp; python main.py --rfcs rfcs/ --topic_method lda
+
+Acknowledgements: This research was funded by a grant from the Office of Naval Research (ONR). 
 
 
