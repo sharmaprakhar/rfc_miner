@@ -25,7 +25,7 @@ def load_corpus(pkl_path):
 def remove_stopwords(texts):
     return [[word for word in simple_preprocess(str(doc)) if word not in stop_words] for doc in texts]
 
-def make_bigrams(texts):
+def make_bigrams(bigram_mod, texts):
     return [bigram_mod[doc] for doc in texts]
 
 def make_trigrams(texts):
@@ -58,7 +58,7 @@ def build_and_run(num_topics):
     data_words_nostops = remove_stopwords(data_words)
 
     # Form Bigrams
-    data_words_bigrams = make_bigrams(data_words_nostops)
+    data_words_bigrams = make_bigrams(bigram_mod, data_words_nostops)
 
     # Initialize spacy 'en' model, keeping only tagger component (for efficiency)
     # python3 -m spacy download en

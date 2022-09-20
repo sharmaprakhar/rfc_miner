@@ -19,27 +19,27 @@ How To Run:
 
 The base class provides two class objects: 
 
-artifactExtractor: provides APIs for extraction of protocol RFC artifacts. We identify the following major classes of artifacts:
-    1. Natural language text<br />
-    2. string definition<br />
-    3. message structure<br />
-    4. data flow diagrams<br />
-    5. topology diagrams<br />
-    6. tables<br />
-    7. state diagrams<br />
-    8. client-server comminucation diagrams<br />
-    9. protocol layer diagrams<br />
-    10. captions<br />
-    11. headers<br />
-    12. table of contents<br />
-    13. lexical specifications<br />
+artifactExtractor: provides APIs for extraction of protocol RFC artifacts. We identify the following major classes of artifacts:<br />
+    &emsp; 1. Natural language text<br />
+    &emsp; 2. string definition<br />
+    &emsp; 3. message structure<br />
+    &emsp; 4. data flow diagrams<br />
+    &emsp; 5. topology diagrams<br />
+    &emsp; 6. tables<br />
+    &emsp; 7. state diagrams<br />
+    &emsp; 8. client-server comminucation diagrams<br />
+    &emsp; 9. protocol layer diagrams<br />
+    &emsp; 10. captions<br />
+    &emsp; 11. headers<br />
+    &emsp; 12. table of contents<br />
+    &emsp; 13. lexical specifications<br />
 
 topic_model: provides APIs for the following functionalities:
-    1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
-    2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups<br />
-    3. Carry out topic modeling on RFCs using two major topic modeling techniques:<br />
-        a. Latent Dirichlet Allocation<br />
-        b. BERT model based topic modeling (BERTopic)<br />
+    &emsp; 1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
+    &emsp; 2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups<br />
+    &emsp; 3. Carry out topic modeling on RFCs using two major topic modeling techniques:<br />
+        &emsp;&emsp; a. Latent Dirichlet Allocation<br />
+        &emsp;&emsp; b. BERT model based topic modeling (BERTopic)<br />
 
 To run the n-way clasifier:<br />
     &emsp; python main.py --rfcs rfcs/ --extraction_method 'nway'
