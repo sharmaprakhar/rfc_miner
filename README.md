@@ -34,7 +34,7 @@ The base class provides two class objects:
     &emsp; 12. Table of contents<br />
     &emsp; 13. Lexical specifications<br />
 
-**topic_model**: provides APIs for the following functionalities:<br />
+**topicModel**: provides APIs for the following functionalities:<br />
     &emsp; 1. Cluster a given set of RFCs using explicit connection information inside RFCs<br />
     &emsp; 2. Create a pairwise RFC similarity matrix for 'soft-clustering' into groups<br />
     &emsp; 3. Perform topic modeling on RFCs using two major topic modeling techniques:<br />
