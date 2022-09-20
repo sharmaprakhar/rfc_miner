@@ -41,16 +41,16 @@ topic_model: provides APIs for the following functionalities:
         a. Latent Dirichlet Allocation<br />
         b. BERT model based topic modeling (BERTopic)<br />
 
-To run the n-way clasifier:
-    python main.py --rfcs rfcs/ --extraction_method 'nway'
+To run the n-way clasifier:<br />
+    &emsp; python main.py --rfcs rfcs/ --extraction_method 'nway'
 
-To run the symbol based classifier:
-    python main.py --rfcs rfcs/ --extraction_method 'symbol_based'
+To run the symbol based classifier:<br />
+    &emsp; python main.py --rfcs rfcs/ --extraction_method 'symbol_based'
 
-To run the tfidf vectorizer:
-    python main.py --rfcs rfcs/ --topic_method tfidf
+To run the tfidf vectorizer:<br />
+    &emsp; python main.py --rfcs rfcs/ --topic_method tfidf
 
-To run the lda topic mode;:
-    python main.py --rfcs rfcs/ --topic_method lda
+To run the lda topic mode;:<br />
+    &emsp; python main.py --rfcs rfcs/ --topic_method lda
 
 
