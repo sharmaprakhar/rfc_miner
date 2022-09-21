@@ -54,4 +54,5 @@ The base class provides two class objects:
     &emsp; python main.py --rfcs rfcs/ --topic_method lda
 
 Acknowledgements: This research was funded by a grant from the Office of Naval Research (ONR). 
-![alt text](https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Office_of_Naval_Research_Official_Logo.png/640px-Office_of_Naval_Research_Official_Logo.png)
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Office_of_Naval_Research_Official_Logo.png/640px-Office_of_Naval_Research_Official_Logo.png" width="48">
