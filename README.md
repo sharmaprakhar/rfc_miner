@@ -55,4 +55,4 @@ The base class provides two class objects:
 
 Acknowledgements: This research was funded by a grant from the Office of Naval Research (ONR). 
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Office_of_Naval_Research_Official_Logo.png/640px-Office_of_Naval_Research_Official_Logo.png" width="48">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Office_of_Naval_Research_Official_Logo.png/640px-Office_of_Naval_Research_Official_Logo.png" width="200">
